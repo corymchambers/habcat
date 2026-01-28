@@ -10,6 +10,7 @@ import { useFocusEffect, useRouter } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { colors, spacing, fontSize, borderRadius } from "@/constants/theme";
+import { CatMascot } from "@/components/CatMascot";
 import { getAllHabits, parseDays, formatDaysDisplay } from "@/database";
 
 type Habit = {
@@ -39,8 +40,7 @@ export default function HabitsScreen() {
             {habits.length} {habits.length === 1 ? "habit" : "habits"}
           </Text>
         </View>
-        {/* Cat mascot placeholder */}
-        <View style={styles.mascotPlaceholder} />
+        <CatMascot variant="sitting" size="lg" />
       </View>
 
       <ScrollView style={styles.list} contentContainerStyle={styles.listContent}>

@@ -1,0 +1,30 @@
+<svg width="200" height="200" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Body -->
+  <ellipse cx="50" cy="68" rx="26" ry="22" fill="#C9B99A"/>
+  <!-- Head -->
+  <circle cx="50" cy="40" r="22" fill="#C9B99A"/>
+  <!-- Left ear -->
+  <path d="M32 24 L28 10 L42 20 Z" fill="#C9B99A"/>
+  <!-- Right ear -->
+  <path d="M68 24 L72 10 L58 20 Z" fill="#C9B99A"/>
+  <!-- Inner ears -->
+  <path d="M34 22 L32 14 L40 20 Z" fill="#C4A07A"/>
+  <path d="M66 22 L68 14 L60 20 Z" fill="#C4A07A"/>
+  <!-- Eyes - super happy, closed arcs -->
+  <path d="M38 38 Q44 32 50 38" stroke="#363B47" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+  <path d="M50 38 Q56 32 62 38" stroke="#363B47" stroke-width="2.5" stroke-linecap="round" fill="none"/>
+  <!-- Rosy cheeks -->
+  <ellipse cx="35" cy="44" rx="4" ry="2.5" fill="#E8C8C8"/>
+  <ellipse cx="65" cy="44" rx="4" ry="2.5" fill="#E8C8C8"/>
+  <!-- Nose -->
+  <ellipse cx="50" cy="46" rx="3" ry="2" fill="#C4A07A"/>
+  <!-- Big smile -->
+  <path d="M42 50 Q50 58 58 50" stroke="#363B47" stroke-width="2" stroke-linecap="round" fill="none"/>
+  <!-- Raised paw -->
+  <ellipse cx="75" cy="55" rx="7" ry="6" fill="#C9B99A"/>
+  <!-- Sparkles -->
+  <path d="M20 25 L22 20 L24 25 L29 23 L24 25 L26 30 L24 25 L19 27 Z" fill="#4A9B82"/>
+  <path d="M80 30 L81 27 L82 30 L85 29 L82 30 L83 33 L82 30 L79 31 Z" fill="#4A9B82"/>
+  <circle cx="15" cy="45" r="2" fill="#4A9B82" opacity="0.6"/>
+  <circle cx="88" cy="50" r="2" fill="#4A9B82" opacity="0.6"/>
+</svg>

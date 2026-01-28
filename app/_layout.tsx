@@ -3,11 +3,28 @@ import { StatusBar } from "expo-status-bar";
 import { useEffect } from "react";
 import { initDatabase } from "@/database";
 import { colors } from "@/constants/theme";
+import { Onboarding } from "@/components/Onboarding";
+import { OnboardingProvider, useOnboarding } from "@/context/OnboardingContext";
 
-export default function RootLayout() {
+function RootLayoutContent() {
+  const { showOnboarding, isLoading } = useOnboarding();
+
   useEffect(() => {
     initDatabase();
   }, []);
+
+  if (isLoading) {
+    return null;
+  }
+
+  if (showOnboarding) {
+    return (
+      <>
+        <Onboarding />
+        <StatusBar style="dark" />
+      </>
+    );
+  }
 
   return (
     <>
@@ -35,5 +52,13 @@ export default function RootLayout() {
       </Stack>
       <StatusBar style="dark" />
     </>
+  );
+}
+
+export default function RootLayout() {
+  return (
+    <OnboardingProvider>
+      <RootLayoutContent />
+    </OnboardingProvider>
   );
 }

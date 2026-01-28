@@ -1,0 +1,26 @@
+<svg width="200" height="200" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Body -->
+  <ellipse cx="50" cy="68" rx="26" ry="22" fill="#C9B99A"/>
+  <!-- Head -->
+  <circle cx="50" cy="40" r="22" fill="#C9B99A"/>
+  <!-- Left ear -->
+  <path d="M32 24 L28 10 L42 20 Z" fill="#C9B99A"/>
+  <!-- Right ear -->
+  <path d="M68 24 L72 10 L58 20 Z" fill="#C9B99A"/>
+  <!-- Inner ears -->
+  <path d="M34 22 L32 14 L40 20 Z" fill="#C4A07A"/>
+  <path d="M66 22 L68 14 L60 20 Z" fill="#C4A07A"/>
+  <!-- Eyes - friendly -->
+  <circle cx="42" cy="38" r="4" fill="#363B47"/>
+  <circle cx="58" cy="38" r="4" fill="#363B47"/>
+  <circle cx="43" cy="37" r="1.5" fill="white"/>
+  <circle cx="59" cy="37" r="1.5" fill="white"/>
+  <!-- Nose -->
+  <ellipse cx="50" cy="46" rx="3" ry="2" fill="#C4A07A"/>
+  <!-- Smile -->
+  <path d="M45 51 Q50 55 55 51" stroke="#363B47" stroke-width="1.5" stroke-linecap="round" fill="none"/>
+  <!-- Waving paw -->
+  <ellipse cx="78" cy="48" rx="7" ry="6" fill="#C9B99A" transform="rotate(-20 78 48)"/>
+  <!-- Tail -->
+  <path d="M76 72 Q88 60 84 48" stroke="#C9B99A" stroke-width="7" stroke-linecap="round" fill="none"/>
+</svg>

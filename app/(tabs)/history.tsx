@@ -1,36 +1,53 @@
 import { useState, useCallback, useMemo } from "react";
-import { View, Text, StyleSheet, Pressable, ScrollView } from "react-native";
+import {
+  View,
+  Text,
+  StyleSheet,
+  Pressable,
+  ScrollView,
+  Platform,
+  Modal,
+} from "react-native";
 import { useFocusEffect } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
+import DateTimePicker, {
+  DateTimePickerEvent,
+} from "@react-native-community/datetimepicker";
+import Ionicons from "@expo/vector-icons/Ionicons";
 import { colors, spacing, fontSize, borderRadius } from "@/constants/theme";
+import { CatMascot } from "@/components/CatMascot";
 import {
-  getAllHabits,
-  getCompletionsForDateRange,
-  parseDays,
+  getHistoryData,
+  getStreaks,
+  getCompletionStats,
   formatDate,
-  DayOfWeek,
+  parseLocalDate,
+  DayDetail,
+  StreakData,
 } from "@/database";
 
-type FilterPeriod = "week" | "month" | "year";
-
-const dayMap: Record<number, DayOfWeek> = {
-  0: "sun",
-  1: "mon",
-  2: "tue",
-  3: "wed",
-  4: "thu",
-  5: "fri",
-  6: "sat",
-};
+type FilterPeriod = "week" | "month" | "year" | "custom";
 
 export default function HistoryScreen() {
-  const [period, setPeriod] = useState<FilterPeriod>("month");
-  const [habits, setHabits] = useState<
-    { id: number; name: string; days: string }[]
-  >([]);
-  const [completions, setCompletions] = useState<
-    { habitId: number; date: string }[]
-  >([]);
+  const [period, setPeriod] = useState<FilterPeriod>("week");
+  const [historyData, setHistoryData] = useState<DayDetail[]>([]);
+  const [streaks, setStreaks] = useState<StreakData>({ current: 0, longest: 0 });
+  const [expandedDates, setExpandedDates] = useState<Set<string>>(new Set());
+
+  // Custom date range
+  const [customStartDate, setCustomStartDate] = useState<Date>(() => {
+    const d = new Date();
+    d.setDate(d.getDate() - 30);
+    return d;
+  });
+  const [customEndDate, setCustomEndDate] = useState<Date>(new Date());
+
+  // Date picker visibility
+  const [showStartPicker, setShowStartPicker] = useState(false);
+  const [showEndPicker, setShowEndPicker] = useState(false);
+
+  // Temp date for picker (so we can cancel)
+  const [tempDate, setTempDate] = useState<Date>(new Date());
 
   const today = useMemo(() => new Date(), []);
 
@@ -41,143 +58,104 @@ export default function HistoryScreen() {
     if (period === "week") {
       start.setDate(end.getDate() - 6);
     } else if (period === "month") {
-      start.setDate(1);
+      start.setDate(end.getDate() - 29);
+    } else if (period === "year") {
+      start.setFullYear(end.getFullYear() - 1);
     } else {
-      start.setMonth(0, 1);
+      return {
+        startDate: formatDate(customStartDate),
+        endDate: formatDate(customEndDate),
+      };
     }
 
     return {
       startDate: formatDate(start),
       endDate: formatDate(end),
     };
-  }, [period, today]);
+  }, [period, today, customStartDate, customEndDate]);
 
   useFocusEffect(
     useCallback(() => {
-      setHabits(getAllHabits());
-      setCompletions(getCompletionsForDateRange(startDate, endDate));
+      setHistoryData(getHistoryData(startDate, endDate));
+      setStreaks(getStreaks());
     }, [startDate, endDate])
   );
 
   const stats = useMemo(() => {
-    let expectedCount = 0;
-    const completedCount = completions.length;
+    return getCompletionStats(startDate, endDate);
+  }, [startDate, endDate]);
 
-    const start = new Date(startDate);
-    const end = new Date(endDate);
-
-    for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-      const day = dayMap[d.getDay()];
-      for (const habit of habits) {
-        if (parseDays(habit.days).includes(day)) {
-          expectedCount++;
-        }
-      }
-    }
-
-    return {
-      completed: completedCount,
-      expected: expectedCount,
-      percentage:
-        expectedCount > 0
-          ? Math.round((completedCount / expectedCount) * 100)
-          : 0,
-    };
-  }, [habits, completions, startDate, endDate]);
-
-  // Generate calendar data for month view
-  const calendarData = useMemo(() => {
-    if (period !== "month") return null;
-
-    const year = today.getFullYear();
-    const month = today.getMonth();
-    const firstDay = new Date(year, month, 1);
-    const lastDay = new Date(year, month + 1, 0);
-    const daysInMonth = lastDay.getDate();
-    const startDayOfWeek = (firstDay.getDay() + 6) % 7; // Monday = 0
-
-    const completionsByDate = new Map<string, number>();
-    const expectedByDate = new Map<string, number>();
-
-    // Calculate expected habits per day
-    for (let day = 1; day <= daysInMonth; day++) {
-      const date = new Date(year, month, day);
-      const dateStr = formatDate(date);
-      const dow = dayMap[date.getDay()];
-
-      let expected = 0;
-      for (const habit of habits) {
-        if (parseDays(habit.days).includes(dow)) {
-          expected++;
-        }
-      }
-      expectedByDate.set(dateStr, expected);
-    }
-
-    // Count completions per day
-    for (const c of completions) {
-      const count = completionsByDate.get(c.date) || 0;
-      completionsByDate.set(c.date, count + 1);
-    }
-
-    const weeks: Array<
-      Array<{
-        day: number | null;
-        status: "complete" | "partial" | "none" | "future";
-        isToday: boolean;
-      }>
-    > = [];
-
-    let currentWeek: typeof weeks[0] = [];
-
-    // Add empty cells for days before the 1st
-    for (let i = 0; i < startDayOfWeek; i++) {
-      currentWeek.push({ day: null, status: "none", isToday: false });
-    }
-
-    const todayStr = formatDate(today);
-
-    for (let day = 1; day <= daysInMonth; day++) {
-      const date = new Date(year, month, day);
-      const dateStr = formatDate(date);
-      const isToday = dateStr === todayStr;
-      const isFuture = date > today;
-
-      let status: "complete" | "partial" | "none" | "future" = "none";
-
-      if (isFuture) {
-        status = "future";
+  const toggleExpanded = (date: string) => {
+    setExpandedDates((prev) => {
+      const next = new Set(prev);
+      if (next.has(date)) {
+        next.delete(date);
       } else {
-        const expected = expectedByDate.get(dateStr) || 0;
-        const completed = completionsByDate.get(dateStr) || 0;
-
-        if (expected === 0) {
-          status = "none";
-        } else if (completed >= expected) {
-          status = "complete";
-        } else if (completed > 0) {
-          status = "partial";
-        }
+        next.add(date);
       }
+      return next;
+    });
+  };
 
-      currentWeek.push({ day, status, isToday });
+  const formatDisplayDate = (dateStr: string) => {
+    const date = parseLocalDate(dateStr);
+    const todayStr = formatDate(today);
+    const yesterdayDate = new Date(today);
+    yesterdayDate.setDate(yesterdayDate.getDate() - 1);
+    const yesterdayStr = formatDate(yesterdayDate);
 
-      if (currentWeek.length === 7) {
-        weeks.push(currentWeek);
-        currentWeek = [];
+    if (dateStr === todayStr) return "Today";
+    if (dateStr === yesterdayStr) return "Yesterday";
+
+    return date.toLocaleDateString("en-US", {
+      weekday: "short",
+      month: "short",
+      day: "numeric",
+    });
+  };
+
+  const openStartPicker = () => {
+    setTempDate(customStartDate);
+    setShowStartPicker(true);
+  };
+
+  const openEndPicker = () => {
+    setTempDate(customEndDate);
+    setShowEndPicker(true);
+  };
+
+  const handlePickerChange = (
+    _event: DateTimePickerEvent,
+    selectedDate?: Date
+  ) => {
+    if (Platform.OS === "android") {
+      // Android dialog auto-dismisses
+      if (showStartPicker) {
+        setShowStartPicker(false);
+        if (selectedDate) setCustomStartDate(selectedDate);
+      } else {
+        setShowEndPicker(false);
+        if (selectedDate) setCustomEndDate(selectedDate);
       }
+    } else if (selectedDate) {
+      setTempDate(selectedDate);
     }
+  };
 
-    // Pad the last week
-    while (currentWeek.length > 0 && currentWeek.length < 7) {
-      currentWeek.push({ day: null, status: "none", isToday: false });
+  const handlePickerDone = () => {
+    if (showStartPicker) {
+      setCustomStartDate(tempDate);
+      setShowStartPicker(false);
+    } else {
+      setCustomEndDate(tempDate);
+      setShowEndPicker(false);
     }
-    if (currentWeek.length === 7) {
-      weeks.push(currentWeek);
-    }
+  };
 
-    return weeks;
-  }, [period, today, habits, completions]);
+  const handlePickerCancel = () => {
+    setShowStartPicker(false);
+    setShowEndPicker(false);
+  };
 
   return (
     <SafeAreaView style={styles.container} edges={["top"]}>
@@ -186,13 +164,26 @@ export default function HistoryScreen() {
           <Text style={styles.title}>History</Text>
           <Text style={styles.subtitle}>Your journey so far</Text>
         </View>
-        {/* Cat mascot placeholder */}
-        <View style={styles.mascotPlaceholder} />
+        <CatMascot variant="sitting" size="lg" />
+      </View>
+
+      {/* Streak cards */}
+      <View style={styles.streakContainer}>
+        <View style={styles.streakCard}>
+          <Ionicons name="flame" size={24} color={colors.primary} />
+          <Text style={styles.streakValue}>{streaks.current}</Text>
+          <Text style={styles.streakLabel}>Current streak</Text>
+        </View>
+        <View style={styles.streakCard}>
+          <Ionicons name="trophy" size={24} color={colors.primary} />
+          <Text style={styles.streakValue}>{streaks.longest}</Text>
+          <Text style={styles.streakLabel}>Longest streak</Text>
+        </View>
       </View>
 
       {/* Period filter */}
       <View style={styles.filterContainer}>
-        {(["week", "month", "year"] as FilterPeriod[]).map((p) => (
+        {(["week", "month", "year", "custom"] as FilterPeriod[]).map((p) => (
           <Pressable
             key={p}
             style={[styles.filterButton, period === p && styles.filterButtonActive]}
@@ -210,6 +201,79 @@ export default function HistoryScreen() {
         ))}
       </View>
 
+      {/* Custom date range pickers */}
+      {period === "custom" && (
+        <View style={styles.customDateContainer}>
+          <Pressable style={styles.datePickerField} onPress={openStartPicker}>
+            <Text style={styles.datePickerLabel}>From</Text>
+            <Text style={styles.datePickerValue}>
+              {customStartDate.toLocaleDateString()}
+            </Text>
+          </Pressable>
+          <Pressable style={styles.datePickerField} onPress={openEndPicker}>
+            <Text style={styles.datePickerLabel}>To</Text>
+            <Text style={styles.datePickerValue}>
+              {customEndDate.toLocaleDateString()}
+            </Text>
+          </Pressable>
+        </View>
+      )}
+
+      {/* Date picker modal (iOS) / dialog (Android) */}
+      {Platform.OS === "ios" && (showStartPicker || showEndPicker) && (
+        <Modal transparent animationType="slide">
+          <Pressable style={styles.pickerOverlay} onPress={handlePickerCancel}>
+            <Pressable style={styles.pickerContainer} onPress={() => {}}>
+              <View style={styles.pickerHandle} />
+              <View style={styles.pickerHeader}>
+                <Pressable onPress={handlePickerCancel} hitSlop={8}>
+                  <Text style={styles.pickerCancelText}>Cancel</Text>
+                </Pressable>
+                <Text style={styles.pickerTitle}>
+                  Select {showStartPicker ? "start" : "end"} date
+                </Text>
+                <Pressable onPress={handlePickerDone} hitSlop={8}>
+                  <Text style={styles.pickerDoneText}>Done</Text>
+                </Pressable>
+              </View>
+              <View style={styles.pickerBody}>
+                <DateTimePicker
+                  value={tempDate}
+                  mode="date"
+                  display="inline"
+                  onChange={handlePickerChange}
+                  maximumDate={showStartPicker ? customEndDate : today}
+                  minimumDate={showEndPicker ? customStartDate : undefined}
+                  accentColor={colors.primary}
+                  style={styles.inlinePicker}
+                />
+              </View>
+            </Pressable>
+          </Pressable>
+        </Modal>
+      )}
+
+      {Platform.OS === "android" && showStartPicker && (
+        <DateTimePicker
+          value={customStartDate}
+          mode="date"
+          display="default"
+          onChange={handlePickerChange}
+          maximumDate={customEndDate}
+        />
+      )}
+
+      {Platform.OS === "android" && showEndPicker && (
+        <DateTimePicker
+          value={customEndDate}
+          mode="date"
+          display="default"
+          onChange={handlePickerChange}
+          minimumDate={customStartDate}
+          maximumDate={today}
+        />
+      )}
+
       <ScrollView style={styles.content}>
         {/* Stats card */}
         <View style={styles.statsCard}>
@@ -225,73 +289,84 @@ export default function HistoryScreen() {
           </View>
         </View>
 
-        {/* Calendar (month view only) */}
-        {period === "month" && calendarData && (
-          <View style={styles.calendarCard}>
-            <View style={styles.calendarHeader}>
-              {["M", "T", "W", "T", "F", "S", "S"].map((d, i) => (
-                <Text key={i} style={styles.calendarDayLabel}>
-                  {d}
-                </Text>
-              ))}
+        {/* History list */}
+        <View style={styles.historyList}>
+          {historyData.length === 0 ? (
+            <View style={styles.emptyState}>
+              <Text style={styles.emptyText}>No history yet</Text>
+              <Text style={styles.emptySubtext}>
+                Complete habits to see your progress
+              </Text>
             </View>
-            {calendarData.map((week, weekIndex) => (
-              <View key={weekIndex} style={styles.calendarWeek}>
-                {week.map((cell, dayIndex) => (
-                  <View
-                    key={dayIndex}
-                    style={[
-                      styles.calendarCell,
-                      cell.status === "complete" && styles.calendarCellComplete,
-                      cell.status === "partial" && styles.calendarCellPartial,
-                      cell.status === "future" && styles.calendarCellFuture,
-                      cell.isToday && styles.calendarCellToday,
-                    ]}
-                  >
-                    {cell.day && (
-                      <Text
-                        style={[
-                          styles.calendarDayText,
-                          cell.status === "future" &&
-                            styles.calendarDayTextFuture,
-                        ]}
-                      >
-                        {cell.day}
-                      </Text>
-                    )}
-                  </View>
-                ))}
-              </View>
-            ))}
-            <View style={styles.legend}>
-              <View style={styles.legendItem}>
-                <View
-                  style={[styles.legendDot, { backgroundColor: colors.success }]}
-                />
-                <Text style={styles.legendText}>Complete</Text>
-              </View>
-              <View style={styles.legendItem}>
-                <View
-                  style={[
-                    styles.legendDot,
-                    { backgroundColor: colors.successMuted },
-                  ]}
-                />
-                <Text style={styles.legendText}>Partial</Text>
-              </View>
-            </View>
-          </View>
-        )}
+          ) : (
+            historyData.map((day) => {
+              const isExpanded = expandedDates.has(day.date);
+              const isComplete = day.completed === day.total;
+              const hasData = day.completed > 0;
 
-        {/* Simple stats for week/year view */}
-        {period !== "month" && (
-          <View style={styles.simpleStats}>
-            <Text style={styles.simpleStatsText}>
-              You completed {stats.completed} habits out of {stats.expected}{" "}
-              scheduled this {period}.
-            </Text>
-          </View>
-        )}
+              return (
+                <View key={day.date}>
+                  <Pressable
+                    style={styles.dayRow}
+                    onPress={hasData ? () => toggleExpanded(day.date) : undefined}
+                    disabled={!hasData}
+                  >
+                    <View style={styles.dayInfo}>
+                      <Text style={styles.dayDate}>
+                        {formatDisplayDate(day.date)}
+                      </Text>
+                    </View>
+                    {hasData ? (
+                      <View style={styles.dayStats}>
+                        <Text
+                          style={[
+                            styles.dayCount,
+                            isComplete && styles.dayCountComplete,
+                          ]}
+                        >
+                          {day.completed}/{day.total}
+                        </Text>
+                        <Ionicons
+                          name={isExpanded ? "chevron-up" : "chevron-down"}
+                          size={20}
+                          color={colors.mutedForeground}
+                        />
+                      </View>
+                    ) : (
+                      <Text style={styles.noDataText}>No data</Text>
+                    )}
+                  </Pressable>
+
+                  {hasData && isExpanded && (
+                    <View style={styles.expandedContent}>
+                      {day.habits.map((habit) => (
+                        <View key={habit.id} style={styles.habitRow}>
+                          <Ionicons
+                            name={habit.completed ? "checkmark-circle" : "ellipse-outline"}
+                            size={20}
+                            color={
+                              habit.completed
+                                ? colors.success
+                                : colors.habitBorder
+                            }
+                          />
+                          <Text
+                            style={[
+                              styles.habitName,
+                              habit.completed && styles.habitNameCompleted,
+                            ]}
+                          >
+                            {habit.name}
+                          </Text>
+                        </View>
+                      ))}
+                    </View>
+                  )}
+                </View>
+              );
+            })
+          )}
+        </View>
       </ScrollView>
     </SafeAreaView>
   );
@@ -349,9 +424,117 @@ const styles = StyleSheet.create({
   filterTextActive: {
     color: colors.primaryForeground,
   },
+  customDateContainer: {
+    flexDirection: "row",
+    paddingHorizontal: spacing.lg,
+    marginBottom: spacing.md,
+    gap: spacing.md,
+  },
+  datePickerField: {
+    flex: 1,
+    backgroundColor: colors.card,
+    borderRadius: borderRadius.md,
+    padding: spacing.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  datePickerLabel: {
+    fontSize: fontSize.xs,
+    color: colors.mutedForeground,
+    marginBottom: spacing.xs,
+  },
+  datePickerValue: {
+    fontSize: fontSize.base,
+    fontWeight: "500",
+    color: colors.primary,
+  },
+  pickerOverlay: {
+    flex: 1,
+    backgroundColor: "rgba(0,0,0,0.3)",
+    justifyContent: "flex-end",
+  },
+  pickerContainer: {
+    backgroundColor: "#FFFFFF",
+    borderTopLeftRadius: 20,
+    borderTopRightRadius: 20,
+    paddingBottom: 40,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: -4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 12,
+    elevation: 8,
+  },
+  pickerHandle: {
+    width: 36,
+    height: 5,
+    borderRadius: 3,
+    backgroundColor: colors.muted,
+    alignSelf: "center",
+    marginTop: spacing.sm,
+    marginBottom: spacing.xs,
+  },
+  pickerHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.sm,
+    paddingBottom: spacing.md,
+  },
+  pickerBody: {
+    paddingHorizontal: spacing.sm,
+    alignItems: "center",
+  },
+  inlinePicker: {
+    height: 340,
+  },
+  pickerTitle: {
+    fontSize: fontSize.lg,
+    fontWeight: "600",
+    color: colors.foreground,
+  },
+  pickerCancelText: {
+    fontSize: fontSize.base,
+    color: colors.mutedForeground,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.sm,
+  },
+  pickerDoneText: {
+    fontSize: fontSize.base,
+    fontWeight: "600",
+    color: colors.primary,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.sm,
+  },
   content: {
     flex: 1,
     paddingHorizontal: spacing.lg,
+  },
+  streakContainer: {
+    flexDirection: "row",
+    paddingHorizontal: spacing.lg,
+    gap: spacing.md,
+    marginBottom: spacing.md,
+  },
+  streakCard: {
+    flex: 1,
+    backgroundColor: colors.card,
+    borderRadius: borderRadius.lg,
+    padding: spacing.md,
+    alignItems: "center",
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  streakValue: {
+    fontSize: fontSize.xl,
+    fontWeight: "700",
+    color: colors.foreground,
+    marginTop: spacing.xs,
+  },
+  streakLabel: {
+    fontSize: fontSize.xs,
+    color: colors.mutedForeground,
+    marginTop: spacing.xs,
   },
   statsCard: {
     flexDirection: "row",
@@ -374,87 +557,75 @@ const styles = StyleSheet.create({
     fontWeight: "700",
     color: colors.foreground,
   },
-  calendarCard: {
-    backgroundColor: colors.card,
-    borderRadius: borderRadius.lg,
-    padding: spacing.lg,
-    borderWidth: 1,
-    borderColor: colors.border,
+  historyList: {
+    marginBottom: spacing.xl,
   },
-  calendarHeader: {
+  dayRow: {
     flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingVertical: spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  dayInfo: {
+    flex: 1,
+  },
+  dayDate: {
+    fontSize: fontSize.base,
+    fontWeight: "500",
+    color: colors.foreground,
+  },
+  dayStats: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.sm,
+  },
+  dayCount: {
+    fontSize: fontSize.base,
+    fontWeight: "600",
+    color: colors.mutedForeground,
+  },
+  dayCountComplete: {
+    color: colors.success,
+  },
+  noDataText: {
+    fontSize: fontSize.sm,
+    color: colors.mutedForeground,
+    fontStyle: "italic",
+  },
+  expandedContent: {
+    backgroundColor: colors.muted,
+    borderRadius: borderRadius.md,
+    padding: spacing.md,
     marginBottom: spacing.sm,
   },
-  calendarDayLabel: {
-    flex: 1,
-    textAlign: "center",
-    fontSize: fontSize.sm,
-    fontWeight: "500",
-    color: colors.mutedForeground,
-  },
-  calendarWeek: {
+  habitRow: {
     flexDirection: "row",
-    marginBottom: spacing.xs,
-  },
-  calendarCell: {
-    flex: 1,
-    aspectRatio: 1,
     alignItems: "center",
-    justifyContent: "center",
-    borderRadius: borderRadius.full,
-    margin: 2,
+    gap: spacing.sm,
+    paddingVertical: spacing.xs,
   },
-  calendarCellComplete: {
-    backgroundColor: colors.success,
-  },
-  calendarCellPartial: {
-    backgroundColor: colors.successMuted,
-  },
-  calendarCellFuture: {
-    opacity: 0.4,
-  },
-  calendarCellToday: {
-    borderWidth: 2,
-    borderColor: colors.primary,
-  },
-  calendarDayText: {
+  habitName: {
     fontSize: fontSize.sm,
-    fontWeight: "500",
     color: colors.foreground,
   },
-  calendarDayTextFuture: {
+  habitNameCompleted: {
     color: colors.mutedForeground,
+    textDecorationLine: "line-through",
   },
-  legend: {
-    flexDirection: "row",
-    justifyContent: "center",
-    gap: spacing.lg,
-    marginTop: spacing.md,
-  },
-  legendItem: {
-    flexDirection: "row",
+  emptyState: {
     alignItems: "center",
-    gap: spacing.xs,
+    paddingTop: spacing.xl,
   },
-  legendDot: {
-    width: 12,
-    height: 12,
-    borderRadius: 6,
+  emptyText: {
+    fontSize: fontSize.lg,
+    fontWeight: "600",
+    color: colors.foreground,
   },
-  legendText: {
-    fontSize: fontSize.sm,
-    color: colors.mutedForeground,
-  },
-  simpleStats: {
-    backgroundColor: colors.card,
-    borderRadius: borderRadius.lg,
-    padding: spacing.lg,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  simpleStatsText: {
+  emptySubtext: {
     fontSize: fontSize.base,
-    color: colors.foreground,
-    textAlign: "center",
+    color: colors.mutedForeground,
+    marginTop: spacing.sm,
   },
 });

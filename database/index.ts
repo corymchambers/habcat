@@ -48,7 +48,15 @@ export function getTodayDayOfWeek(): DayOfWeek {
 }
 
 export function formatDate(date: Date): string {
-  return date.toISOString().split("T")[0];
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, "0");
+  const day = String(date.getDate()).padStart(2, "0");
+  return `${year}-${month}-${day}`;
+}
+
+// Parse YYYY-MM-DD as local noon to avoid timezone boundary issues
+export function parseLocalDate(dateStr: string): Date {
+  return new Date(dateStr + "T12:00:00");
 }
 
 export function parseDays(days: string): DayOfWeek[] {
@@ -178,8 +186,8 @@ export function getCompletionStats(startDate: string, endDate: string) {
   let expectedCount = 0;
   let completedCount = allCompletions.length;
 
-  const start = new Date(startDate);
-  const end = new Date(endDate);
+  const start = parseLocalDate(startDate);
+  const end = parseLocalDate(endDate);
 
   for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
     const day = dayMap[d.getDay()];
@@ -212,4 +220,128 @@ export function getDayCompletionStatus(
   if (completedCount === 0) return "none";
   if (completedCount === habitIds.length) return "complete";
   return "partial";
+}
+
+// Get habits scheduled for a specific date
+export function getHabitsForDate(date: string) {
+  const d = parseLocalDate(date);
+  const day = dayMap[d.getDay()];
+  return getHabitsForDay(day);
+}
+
+// Get detailed day data for history
+export interface DayDetail {
+  date: string;
+  habits: Array<{
+    id: number;
+    name: string;
+    completed: boolean;
+  }>;
+  completed: number;
+  total: number;
+}
+
+export function getDayDetails(date: string): DayDetail {
+  const scheduledHabits = getHabitsForDate(date);
+  const dayCompletions = getCompletionsForDate(date);
+  const completedIds = new Set(dayCompletions.map((c) => c.habitId));
+
+  const habits = scheduledHabits.map((h) => ({
+    id: h.id,
+    name: h.name,
+    completed: completedIds.has(h.id),
+  }));
+
+  return {
+    date,
+    habits,
+    completed: habits.filter((h) => h.completed).length,
+    total: habits.length,
+  };
+}
+
+// Get all day details for a date range
+export function getHistoryData(startDate: string, endDate: string): DayDetail[] {
+  const result: DayDetail[] = [];
+  const start = parseLocalDate(startDate);
+  const end = parseLocalDate(endDate);
+
+  for (let d = new Date(end); d >= start; d.setDate(d.getDate() - 1)) {
+    const dateStr = formatDate(d);
+    const dayDetail = getDayDetails(dateStr);
+    // Only include days that had scheduled habits
+    if (dayDetail.total > 0) {
+      result.push(dayDetail);
+    }
+  }
+
+  return result;
+}
+
+// Streak calculation
+export interface StreakData {
+  current: number;
+  longest: number;
+}
+
+export function getStreaks(): StreakData {
+  const allHabits = getAllHabits();
+  if (allHabits.length === 0) {
+    return { current: 0, longest: 0 };
+  }
+
+  // Get all completions sorted by date
+  const allCompletions = db.select().from(completions).all();
+  const completionsByDate = new Map<string, Set<number>>();
+
+  for (const c of allCompletions) {
+    if (!completionsByDate.has(c.date)) {
+      completionsByDate.set(c.date, new Set());
+    }
+    completionsByDate.get(c.date)!.add(c.habitId);
+  }
+
+  // Find the earliest habit creation or completion date
+  const today = new Date();
+  const todayStr = formatDate(today);
+
+  // Calculate streaks going backwards from today
+  let currentStreak = 0;
+  let longestStreak = 0;
+  let tempStreak = 0;
+  let streakBroken = false;
+
+  // Go back up to 365 days (or until we find no more data)
+  for (let i = 0; i < 365; i++) {
+    const d = new Date(today);
+    d.setDate(d.getDate() - i);
+    const dateStr = formatDate(d);
+    const dow = dayMap[d.getDay()];
+
+    // Get habits scheduled for this day
+    const scheduledHabits = allHabits.filter((h) =>
+      parseDays(h.days).includes(dow)
+    );
+
+    if (scheduledHabits.length === 0) {
+      // No habits scheduled, doesn't break streak
+      continue;
+    }
+
+    const completedIds = completionsByDate.get(dateStr) || new Set();
+    const allCompleted = scheduledHabits.every((h) => completedIds.has(h.id));
+
+    if (allCompleted) {
+      tempStreak++;
+      if (!streakBroken) {
+        currentStreak = tempStreak;
+      }
+      longestStreak = Math.max(longestStreak, tempStreak);
+    } else {
+      streakBroken = true;
+      tempStreak = 0;
+    }
+  }
+
+  return { current: currentStreak, longest: longestStreak };
 }

@@ -5,11 +5,14 @@ import {
   StyleSheet,
   Pressable,
   ScrollView,
+  Alert,
 } from "react-native";
 import { useFocusEffect } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Ionicons from "@expo/vector-icons/Ionicons";
+import * as Haptics from "expo-haptics";
 import { colors, spacing, fontSize, borderRadius } from "@/constants/theme";
+import { CatMascot } from "@/components/CatMascot";
 import {
   getTodayHabits,
   getCompletionsForDate,
@@ -46,16 +49,37 @@ export default function TodayScreen() {
   );
 
   const handleToggle = (habitId: number) => {
-    const isNowCompleted = toggleHabitCompletion(habitId, today);
-    setCompletedIds((prev) => {
-      const next = new Set(prev);
-      if (isNowCompleted) {
+    const isCurrentlyCompleted = completedIds.has(habitId);
+
+    if (isCurrentlyCompleted) {
+      Alert.alert(
+        "Uncheck habit?",
+        "Are you sure you want to mark this habit as incomplete?",
+        [
+          { text: "Cancel", style: "cancel" },
+          {
+            text: "Uncheck",
+            onPress: () => {
+              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+              toggleHabitCompletion(habitId, today);
+              setCompletedIds((prev) => {
+                const next = new Set(prev);
+                next.delete(habitId);
+                return next;
+              });
+            },
+          },
+        ]
+      );
+    } else {
+      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+      toggleHabitCompletion(habitId, today);
+      setCompletedIds((prev) => {
+        const next = new Set(prev);
         next.add(habitId);
-      } else {
-        next.delete(habitId);
-      }
-      return next;
-    });
+        return next;
+      });
+    }
   };
 
   const completedCount = completedIds.size;
@@ -70,8 +94,10 @@ export default function TodayScreen() {
             {completedCount} of {totalCount} complete
           </Text>
         </View>
-        {/* Cat mascot placeholder */}
-        <View style={styles.mascotPlaceholder} />
+        <CatMascot
+          variant={totalCount > 0 && completedCount === totalCount ? "celebrating" : "sitting"}
+          size="lg"
+        />
       </View>
 
       <ScrollView style={styles.list} contentContainerStyle={styles.listContent}>

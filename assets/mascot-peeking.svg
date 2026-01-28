@@ -1,0 +1,21 @@
+<svg width="200" height="120" viewBox="0 0 100 60" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <!-- Head peeking up -->
+  <circle cx="50" cy="45" r="22" fill="#C9B99A"/>
+  <!-- Left ear -->
+  <path d="M32 30 L28 16 L42 26 Z" fill="#C9B99A"/>
+  <!-- Right ear -->
+  <path d="M68 30 L72 16 L58 26 Z" fill="#C9B99A"/>
+  <!-- Inner ears -->
+  <path d="M34 28 L32 20 L40 26 Z" fill="#C4A07A"/>
+  <path d="M66 28 L68 20 L60 26 Z" fill="#C4A07A"/>
+  <!-- Eyes - curious, open -->
+  <circle cx="42" cy="42" r="4" fill="#363B47"/>
+  <circle cx="58" cy="42" r="4" fill="#363B47"/>
+  <circle cx="43" cy="41" r="1.5" fill="white"/>
+  <circle cx="59" cy="41" r="1.5" fill="white"/>
+  <!-- Nose -->
+  <ellipse cx="50" cy="50" rx="3" ry="2" fill="#C4A07A"/>
+  <!-- Paws on edge -->
+  <ellipse cx="38" cy="58" rx="8" ry="5" fill="#C9B99A"/>
+  <ellipse cx="62" cy="58" rx="8" ry="5" fill="#C9B99A"/>
+</svg>
