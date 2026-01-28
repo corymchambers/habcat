@@ -1,98 +1,205 @@
-import { Image } from 'expo-image';
-import { Platform, StyleSheet } from 'react-native';
+import { useState, useCallback } from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  Pressable,
+  ScrollView,
+} from "react-native";
+import { useFocusEffect } from "expo-router";
+import { SafeAreaView } from "react-native-safe-area-context";
+import Ionicons from "@expo/vector-icons/Ionicons";
+import { colors, spacing, fontSize, borderRadius } from "@/constants/theme";
+import {
+  getTodayHabits,
+  getCompletionsForDate,
+  toggleHabitCompletion,
+  formatDate,
+  parseDays,
+  formatDaysDisplay,
+} from "@/database";
 
-import { HelloWave } from '@/components/hello-wave';
-import ParallaxScrollView from '@/components/parallax-scroll-view';
-import { ThemedText } from '@/components/themed-text';
-import { ThemedView } from '@/components/themed-view';
-import { Link } from 'expo-router';
+type Habit = {
+  id: number;
+  name: string;
+  days: string;
+  createdAt: Date | null;
+};
 
-export default function HomeScreen() {
+export default function TodayScreen() {
+  const [habits, setHabits] = useState<Habit[]>([]);
+  const [completedIds, setCompletedIds] = useState<Set<number>>(new Set());
+  const today = formatDate(new Date());
+
+  const loadData = useCallback(() => {
+    const todayHabits = getTodayHabits();
+    setHabits(todayHabits);
+
+    const completions = getCompletionsForDate(today);
+    setCompletedIds(new Set(completions.map((c) => c.habitId)));
+  }, [today]);
+
+  useFocusEffect(
+    useCallback(() => {
+      loadData();
+    }, [loadData])
+  );
+
+  const handleToggle = (habitId: number) => {
+    const isNowCompleted = toggleHabitCompletion(habitId, today);
+    setCompletedIds((prev) => {
+      const next = new Set(prev);
+      if (isNowCompleted) {
+        next.add(habitId);
+      } else {
+        next.delete(habitId);
+      }
+      return next;
+    });
+  };
+
+  const completedCount = completedIds.size;
+  const totalCount = habits.length;
+
   return (
-    <ParallaxScrollView
-      headerBackgroundColor={{ light: '#A1CEDC', dark: '#1D3D47' }}
-      headerImage={
-        <Image
-          source={require('@/assets/images/partial-react-logo.png')}
-          style={styles.reactLogo}
-        />
-      }>
-      <ThemedView style={styles.titleContainer}>
-        <ThemedText type="title">Welcome!</ThemedText>
-        <HelloWave />
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 1: Try it</ThemedText>
-        <ThemedText>
-          Edit <ThemedText type="defaultSemiBold">app/(tabs)/index.tsx</ThemedText> to see changes.
-          Press{' '}
-          <ThemedText type="defaultSemiBold">
-            {Platform.select({
-              ios: 'cmd + d',
-              android: 'cmd + m',
-              web: 'F12',
-            })}
-          </ThemedText>{' '}
-          to open developer tools.
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <Link href="/modal">
-          <Link.Trigger>
-            <ThemedText type="subtitle">Step 2: Explore</ThemedText>
-          </Link.Trigger>
-          <Link.Preview />
-          <Link.Menu>
-            <Link.MenuAction title="Action" icon="cube" onPress={() => alert('Action pressed')} />
-            <Link.MenuAction
-              title="Share"
-              icon="square.and.arrow.up"
-              onPress={() => alert('Share pressed')}
-            />
-            <Link.Menu title="More" icon="ellipsis">
-              <Link.MenuAction
-                title="Delete"
-                icon="trash"
-                destructive
-                onPress={() => alert('Delete pressed')}
-              />
-            </Link.Menu>
-          </Link.Menu>
-        </Link>
+    <SafeAreaView style={styles.container} edges={["top"]}>
+      <View style={styles.header}>
+        <View>
+          <Text style={styles.title}>Today</Text>
+          <Text style={styles.subtitle}>
+            {completedCount} of {totalCount} complete
+          </Text>
+        </View>
+        {/* Cat mascot placeholder */}
+        <View style={styles.mascotPlaceholder} />
+      </View>
 
-        <ThemedText>
-          {`Tap the Explore tab to learn more about what's included in this starter app.`}
-        </ThemedText>
-      </ThemedView>
-      <ThemedView style={styles.stepContainer}>
-        <ThemedText type="subtitle">Step 3: Get a fresh start</ThemedText>
-        <ThemedText>
-          {`When you're ready, run `}
-          <ThemedText type="defaultSemiBold">npm run reset-project</ThemedText> to get a fresh{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> directory. This will move the current{' '}
-          <ThemedText type="defaultSemiBold">app</ThemedText> to{' '}
-          <ThemedText type="defaultSemiBold">app-example</ThemedText>.
-        </ThemedText>
-      </ThemedView>
-    </ParallaxScrollView>
+      <ScrollView style={styles.list} contentContainerStyle={styles.listContent}>
+        {habits.length === 0 ? (
+          <View style={styles.emptyState}>
+            <Text style={styles.emptyText}>No habits for today</Text>
+            <Text style={styles.emptySubtext}>
+              Add habits in the Habits tab
+            </Text>
+          </View>
+        ) : (
+          habits.map((habit) => {
+            const isCompleted = completedIds.has(habit.id);
+            return (
+              <Pressable
+                key={habit.id}
+                style={styles.habitItem}
+                onPress={() => handleToggle(habit.id)}
+              >
+                <Text
+                  style={[
+                    styles.habitName,
+                    isCompleted && styles.habitNameCompleted,
+                  ]}
+                >
+                  {habit.name}
+                </Text>
+                <View
+                  style={[
+                    styles.checkbox,
+                    isCompleted && styles.checkboxCompleted,
+                  ]}
+                >
+                  {isCompleted && (
+                    <Ionicons
+                      name="checkmark"
+                      size={20}
+                      color={colors.primaryForeground}
+                    />
+                  )}
+                </View>
+              </Pressable>
+            );
+          })
+        )}
+      </ScrollView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  titleContainer: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
+  container: {
+    flex: 1,
+    backgroundColor: colors.background,
   },
-  stepContainer: {
-    gap: 8,
-    marginBottom: 8,
+  header: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.md,
+    paddingBottom: spacing.lg,
   },
-  reactLogo: {
-    height: 178,
-    width: 290,
-    bottom: 0,
-    left: 0,
-    position: 'absolute',
+  title: {
+    fontSize: fontSize.xxl,
+    fontWeight: "700",
+    color: colors.foreground,
+  },
+  subtitle: {
+    fontSize: fontSize.base,
+    color: colors.mutedForeground,
+    marginTop: spacing.xs,
+  },
+  mascotPlaceholder: {
+    width: 60,
+    height: 60,
+    borderRadius: 30,
+    backgroundColor: colors.muted,
+  },
+  list: {
+    flex: 1,
+  },
+  listContent: {
+    paddingHorizontal: spacing.lg,
+  },
+  habitItem: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingVertical: spacing.md,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
+  habitName: {
+    fontSize: fontSize.base,
+    fontWeight: "500",
+    color: colors.foreground,
+    flex: 1,
+  },
+  habitNameCompleted: {
+    textDecorationLine: "line-through",
+    color: colors.mutedForeground,
+  },
+  checkbox: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    borderWidth: 2,
+    borderColor: colors.habitBorder,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  checkboxCompleted: {
+    backgroundColor: colors.success,
+    borderColor: colors.success,
+  },
+  emptyState: {
+    alignItems: "center",
+    paddingTop: spacing.xl * 2,
+  },
+  emptyText: {
+    fontSize: fontSize.lg,
+    fontWeight: "600",
+    color: colors.foreground,
+  },
+  emptySubtext: {
+    fontSize: fontSize.base,
+    color: colors.mutedForeground,
+    marginTop: spacing.sm,
   },
 });
