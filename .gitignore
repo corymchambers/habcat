@@ -35,7 +35,7 @@ yarn-error.*
 .env*.local
 
 # Android keystore
-android/app/release.keystore
+release.keystore
 
 # typescript
 *.tsbuildinfo

@@ -20,28 +20,29 @@ A minimalist habit tracking app with a cat mascot.
 
 ### First-time setup: Release signing
 
-1. Generate a release keystore:
+1. Generate a release keystore (stored in project root to survive prebuild):
 
    ```bash
-   keytool -genkeypair -v -storetype PKCS12 -keystore android/app/release.keystore -alias habcat -keyalg RSA -keysize 2048 -validity 10000
+   keytool -genkeypair -v -storetype PKCS12 -keystore release.keystore -alias habcat -keyalg RSA -keysize 2048 -validity 10000
    ```
 
-2. Add the keystore to `.gitignore`:
-
-   ```bash
-   echo "android/app/release.keystore" >> .gitignore
-   ```
-
-3. Add credentials to `android/gradle.properties`:
+2. Add credentials to `~/.gradle/gradle.properties` (user-level, never touched by prebuild):
 
    ```properties
-   MYAPP_UPLOAD_STORE_FILE=release.keystore
-   MYAPP_UPLOAD_KEY_ALIAS=habcat
-   MYAPP_UPLOAD_STORE_PASSWORD=your_password
-   MYAPP_UPLOAD_KEY_PASSWORD=your_password
+   # Habcat Android signing
+   HABCAT_UPLOAD_STORE_FILE=/Users/corychambers/Code/habcat/release.keystore
+   HABCAT_UPLOAD_KEY_ALIAS=habcat
+   HABCAT_UPLOAD_STORE_PASSWORD=your_password
+   HABCAT_UPLOAD_KEY_PASSWORD=your_password
    ```
 
-4. Update `android/app/build.gradle` - add release signing config:
+3. The keystore is already in `.gitignore`
+
+### After running `prebuild` or `prebuild --clean`
+
+After generating the android folder, add the release signing config to `android/app/build.gradle`:
+
+1. Find the `signingConfigs` block and add a `release` config:
 
    ```gradle
    signingConfigs {
@@ -52,17 +53,17 @@ A minimalist habit tracking app with a cat mascot.
            keyPassword 'android'
        }
        release {
-           if (project.hasProperty('MYAPP_UPLOAD_STORE_FILE')) {
-               storeFile file(MYAPP_UPLOAD_STORE_FILE)
-               storePassword MYAPP_UPLOAD_STORE_PASSWORD
-               keyAlias MYAPP_UPLOAD_KEY_ALIAS
-               keyPassword MYAPP_UPLOAD_KEY_PASSWORD
+           if (project.hasProperty('HABCAT_UPLOAD_STORE_FILE')) {
+               storeFile file(HABCAT_UPLOAD_STORE_FILE)
+               storePassword HABCAT_UPLOAD_STORE_PASSWORD
+               keyAlias HABCAT_UPLOAD_KEY_ALIAS
+               keyPassword HABCAT_UPLOAD_KEY_PASSWORD
            }
        }
    }
    ```
 
-   Then update `buildTypes.release` to use it:
+2. Update `buildTypes.release` to use it:
 
    ```gradle
    buildTypes {
@@ -75,27 +76,21 @@ A minimalist habit tracking app with a cat mascot.
 
 ### Build commands
 
-1. Generate the native Android project:
+Build a release AAB (for Google Play):
 
-   ```bash
-   npx expo prebuild -p android
-   ```
+```bash
+cd android && ./gradlew bundleRelease
+```
 
-2. Build a release AAB (for Google Play):
+Output: `android/app/build/outputs/bundle/release/app-release.aab`
 
-   ```bash
-   cd android && ./gradlew bundleRelease
-   ```
+Build a debug APK (for direct testing):
 
-   Output: `android/app/build/outputs/bundle/release/app-release.aab`
+```bash
+cd android && ./gradlew assembleDebug
+```
 
-3. Or build a debug APK (for direct testing):
-
-   ```bash
-   cd android && ./gradlew assembleDebug
-   ```
-
-   Output: `android/app/build/outputs/apk/debug/app-debug.apk`
+Output: `android/app/build/outputs/apk/debug/app-debug.apk`
 
 ## Building for iOS
 
@@ -120,3 +115,5 @@ If you need to regenerate native projects (e.g., after changing bundle identifie
 ```bash
 npx expo prebuild --clean
 ```
+
+**Note:** After this, you only need to re-add the signing config code to `build.gradle` (step 3 above). The credentials in `~/.gradle/gradle.properties` and the keystore file are preserved.
