@@ -5,6 +5,7 @@ import { initDatabase } from "@/database";
 import { colors } from "@/constants/theme";
 import { Onboarding } from "@/components/Onboarding";
 import { OnboardingProvider, useOnboarding } from "@/context/OnboardingContext";
+import { ReviewPromptProvider } from "@/context/ReviewPromptContext";
 
 function RootLayoutContent() {
   const { showOnboarding, isLoading } = useOnboarding();
@@ -27,7 +28,7 @@ function RootLayoutContent() {
   }
 
   return (
-    <>
+    <ReviewPromptProvider>
       <Stack
         screenOptions={{
           headerShown: false,
@@ -51,7 +52,7 @@ function RootLayoutContent() {
         />
       </Stack>
       <StatusBar style="dark" />
-    </>
+    </ReviewPromptProvider>
   );
 }
 

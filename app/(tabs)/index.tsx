@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
 import {
   View,
   Text,
@@ -11,15 +11,15 @@ import { useFocusEffect } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import * as Haptics from "expo-haptics";
-import { colors, spacing, fontSize, borderRadius } from "@/constants/theme";
+import { colors, spacing, fontSize } from "@/constants/theme";
 import { CatMascot } from "@/components/CatMascot";
+import { ReviewPrompt } from "@/components/ReviewPrompt";
+import { useReviewPrompt } from "@/context/ReviewPromptContext";
 import {
   getTodayHabits,
   getCompletionsForDate,
   toggleHabitCompletion,
   formatDate,
-  parseDays,
-  formatDaysDisplay,
 } from "@/database";
 
 type Habit = {
@@ -33,6 +33,7 @@ export default function TodayScreen() {
   const [habits, setHabits] = useState<Habit[]>([]);
   const [completedIds, setCompletedIds] = useState<Set<number>>(new Set());
   const today = formatDate(new Date());
+  const { shouldShowReviewPrompt, recordFullCompletion } = useReviewPrompt();
 
   const loadData = useCallback(() => {
     const todayHabits = getTodayHabits();
@@ -46,6 +47,16 @@ export default function TodayScreen() {
     useCallback(() => {
       loadData();
     }, [loadData])
+  );
+
+  // Check if all habits are now complete and record it
+  const checkFullCompletion = useCallback(
+    (newCompletedIds: Set<number>, totalHabits: number) => {
+      if (totalHabits > 0 && newCompletedIds.size === totalHabits) {
+        recordFullCompletion(today);
+      }
+    },
+    [today, recordFullCompletion]
   );
 
   const handleToggle = (habitId: number) => {
@@ -77,6 +88,8 @@ export default function TodayScreen() {
       setCompletedIds((prev) => {
         const next = new Set(prev);
         next.add(habitId);
+        // Check for full completion after adding
+        checkFullCompletion(next, habits.length);
         return next;
       });
     }
@@ -144,6 +157,7 @@ export default function TodayScreen() {
           })
         )}
       </ScrollView>
+      <ReviewPrompt visible={shouldShowReviewPrompt} />
     </SafeAreaView>
   );
 }

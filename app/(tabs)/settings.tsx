@@ -1,11 +1,17 @@
+import { useState } from "react";
 import { View, Text, StyleSheet, Pressable } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Ionicons from "@expo/vector-icons/Ionicons";
-import { colors, spacing, fontSize } from "@/constants/theme";
+import { colors, spacing, fontSize, borderRadius } from "@/constants/theme";
 import { useOnboarding } from "@/context/OnboardingContext";
+import { useReviewPrompt } from "@/context/ReviewPromptContext";
+import { ReviewPrompt } from "@/components/ReviewPrompt";
+import { FeedbackForm } from "@/components/FeedbackForm";
 
 export default function SettingsScreen() {
   const { resetOnboarding } = useOnboarding();
+  const { shouldShowReviewPrompt } = useReviewPrompt();
+  const [showFeedbackModal, setShowFeedbackModal] = useState(false);
 
   const handleViewOnboarding = async () => {
     await resetOnboarding();
@@ -18,6 +24,14 @@ export default function SettingsScreen() {
       </View>
 
       <View style={styles.section}>
+        <Pressable style={styles.item} onPress={() => setShowFeedbackModal(true)}>
+          <View style={styles.itemContent}>
+            <Ionicons name="chatbubble-outline" size={24} color={colors.foreground} />
+            <Text style={styles.itemText}>Leave Feedback</Text>
+          </View>
+          <Ionicons name="chevron-forward" size={20} color={colors.mutedForeground} />
+        </Pressable>
+
         <Pressable style={styles.item} onPress={handleViewOnboarding}>
           <View style={styles.itemContent}>
             <Ionicons name="information-circle-outline" size={24} color={colors.foreground} />
@@ -26,6 +40,12 @@ export default function SettingsScreen() {
           <Ionicons name="chevron-forward" size={20} color={colors.mutedForeground} />
         </Pressable>
       </View>
+
+      <ReviewPrompt visible={shouldShowReviewPrompt} />
+      <FeedbackForm
+        visible={showFeedbackModal}
+        onClose={() => setShowFeedbackModal(false)}
+      />
     </SafeAreaView>
   );
 }
