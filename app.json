@@ -13,7 +13,7 @@
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       },
-      "bundleIdentifier": "com.corymchambers1.habcat"
+      "bundleIdentifier": "com.corychambers.habcat"
     },
     "android": {
       "adaptiveIcon": {
@@ -22,7 +22,7 @@
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "package": "com.corymchambers1.habcat"
+      "package": "com.corychambers.habcat"
     },
     "web": {
       "output": "static",

@@ -1,6 +1,6 @@
-# Welcome to your Expo app 👋
+# Habcat
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+A minimalist habit tracking app with a cat mascot.
 
 ## Get started
 
@@ -16,35 +16,107 @@ This is an [Expo](https://expo.dev) project created with [`create-expo-app`](htt
    npx expo start
    ```
 
-In the output, you'll find options to open the app in a
+## Building for Android
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+### First-time setup: Release signing
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+1. Generate a release keystore:
 
-## Get a fresh project
+   ```bash
+   keytool -genkeypair -v -storetype PKCS12 -keystore android/app/release.keystore -alias habcat -keyalg RSA -keysize 2048 -validity 10000
+   ```
 
-When you're ready, run:
+2. Add the keystore to `.gitignore`:
+
+   ```bash
+   echo "android/app/release.keystore" >> .gitignore
+   ```
+
+3. Add credentials to `android/gradle.properties`:
+
+   ```properties
+   MYAPP_UPLOAD_STORE_FILE=release.keystore
+   MYAPP_UPLOAD_KEY_ALIAS=habcat
+   MYAPP_UPLOAD_STORE_PASSWORD=your_password
+   MYAPP_UPLOAD_KEY_PASSWORD=your_password
+   ```
+
+4. Update `android/app/build.gradle` - add release signing config:
+
+   ```gradle
+   signingConfigs {
+       debug {
+           storeFile file('debug.keystore')
+           storePassword 'android'
+           keyAlias 'androiddebugkey'
+           keyPassword 'android'
+       }
+       release {
+           if (project.hasProperty('MYAPP_UPLOAD_STORE_FILE')) {
+               storeFile file(MYAPP_UPLOAD_STORE_FILE)
+               storePassword MYAPP_UPLOAD_STORE_PASSWORD
+               keyAlias MYAPP_UPLOAD_KEY_ALIAS
+               keyPassword MYAPP_UPLOAD_KEY_PASSWORD
+           }
+       }
+   }
+   ```
+
+   Then update `buildTypes.release` to use it:
+
+   ```gradle
+   buildTypes {
+       release {
+           signingConfig signingConfigs.release
+           // ... rest of existing config
+       }
+   }
+   ```
+
+### Build commands
+
+1. Generate the native Android project:
+
+   ```bash
+   npx expo prebuild -p android
+   ```
+
+2. Build a release AAB (for Google Play):
+
+   ```bash
+   cd android && ./gradlew bundleRelease
+   ```
+
+   Output: `android/app/build/outputs/bundle/release/app-release.aab`
+
+3. Or build a debug APK (for direct testing):
+
+   ```bash
+   cd android && ./gradlew assembleDebug
+   ```
+
+   Output: `android/app/build/outputs/apk/debug/app-debug.apk`
+
+## Building for iOS
+
+1. Generate the native iOS project:
+
+   ```bash
+   npx expo prebuild -p ios
+   ```
+
+2. Open in Xcode and build:
+
+   ```bash
+   open ios/Habcat.xcworkspace
+   ```
+
+3. Archive and upload via **Product > Archive**, then **Distribute App > App Store Connect**
+
+## Clean rebuild
+
+If you need to regenerate native projects (e.g., after changing bundle identifiers):
 
 ```bash
-npm run reset-project
+npx expo prebuild --clean
 ```
-
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
-
-## Learn more
-
-To learn more about developing your project with Expo, look at the following resources:
-
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
-
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
