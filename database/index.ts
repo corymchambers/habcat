@@ -179,23 +179,15 @@ export function toggleHabitCompletion(habitId: number, date: string): boolean {
 
 // History/Stats
 export function getCompletionStats(startDate: string, endDate: string) {
-  const allHabits = getAllHabits();
-  const allCompletions = getCompletionsForDateRange(startDate, endDate);
+  // Use getHistoryData to only count days that have scheduled habits
+  const historyData = getHistoryData(startDate, endDate);
 
-  // Calculate expected completions for date range
   let expectedCount = 0;
-  let completedCount = allCompletions.length;
+  let completedCount = 0;
 
-  const start = parseLocalDate(startDate);
-  const end = parseLocalDate(endDate);
-
-  for (let d = new Date(start); d <= end; d.setDate(d.getDate() + 1)) {
-    const day = dayMap[d.getDay()];
-    for (const habit of allHabits) {
-      if (parseDays(habit.days).includes(day)) {
-        expectedCount++;
-      }
-    }
+  for (const day of historyData) {
+    expectedCount += day.total;
+    completedCount += day.completed;
   }
 
   return {

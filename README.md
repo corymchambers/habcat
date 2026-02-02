@@ -16,6 +16,24 @@ A minimalist habit tracking app with a cat mascot.
    npx expo start
    ```
 
+## Updating Version/Build Numbers
+
+In `app.json`, update:
+- `version` - User-facing version (e.g., "1.0.0")
+- `ios.buildNumber` - iOS build number (string, e.g., "2")
+- `android.versionCode` - Android build number (integer, e.g., 2)
+
+**Important:** After updating, you must run:
+```bash
+npx expo prebuild --clean
+```
+
+Without `--clean`, existing native values are preserved and won't update.
+
+**Alternative:** Edit directly in native files to avoid re-running prebuild:
+- iOS: Change in Xcode under **General > Identity > Build**
+- Android: Edit `android/app/build.gradle` → `versionCode` and `versionName`
+
 ## Building for Android
 
 ### First-time setup: Release signing
@@ -74,6 +92,14 @@ After generating the android folder, add the release signing config to `android/
    }
    ```
 
+### Automating signing with a config plugin (optional)
+
+To avoid manually re-adding signing config after every `prebuild --clean`, you can use a config plugin:
+
+- **Pre-built plugin:** [expo-signed](https://github.com/akayakagunduz/expo-signed)
+- **DIY guide:** [How I Manage Signing Configs with Expo Prebuild](https://medium.com/@alessandro.orlich_17521/how-i-manage-signing-configs-with-expo-prebuild-6ea6b7576dff)
+- **Official docs:** [Create a release build locally](https://docs.expo.dev/guides/local-app-production/)
+
 ### Build commands
 
 Build a release AAB (for Google Play):
@@ -94,6 +120,20 @@ Output: `android/app/build/outputs/apk/debug/app-debug.apk`
 
 ## Building for iOS
 
+### First-time setup
+
+Add your Apple Team ID to `app.json` so Xcode auto-selects your team:
+
+```json
+"ios": {
+  "appleTeamId": "YOUR_TEAM_ID"
+}
+```
+
+Find your Team ID in Xcode under **Signing & Capabilities** or at [developer.apple.com](https://developer.apple.com/account) → Membership Details.
+
+### Build steps
+
 1. Generate the native iOS project:
 
    ```bash
@@ -110,10 +150,10 @@ Output: `android/app/build/outputs/apk/debug/app-debug.apk`
 
 ## Clean rebuild
 
-If you need to regenerate native projects (e.g., after changing bundle identifiers):
+If you need to regenerate native projects (e.g., after changing bundle identifiers or version numbers):
 
 ```bash
 npx expo prebuild --clean
 ```
 
-**Note:** After this, you only need to re-add the signing config code to `build.gradle` (step 3 above). The credentials in `~/.gradle/gradle.properties` and the keystore file are preserved.
+**Note:** After this, you only need to re-add the signing config code to `build.gradle` (see Android section above). The credentials in `~/.gradle/gradle.properties` and the keystore file are preserved.

@@ -1,4 +1,5 @@
 import { CatMascot } from '@/components/CatMascot';
+import { DaySelector } from '@/components/DaySelector';
 import { borderRadius, colors, fontSize, spacing } from '@/constants/theme';
 import { useOnboarding } from '@/context/OnboardingContext';
 import {
@@ -11,6 +12,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import * as Haptics from 'expo-haptics';
 import { useState } from 'react';
 import {
+  Keyboard,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -19,23 +21,6 @@ import {
   View,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-
-const DAYS: { label: string; value: DayOfWeek }[] = [
-  { label: 'Mon', value: 'mon' },
-  { label: 'Tue', value: 'tue' },
-  { label: 'Wed', value: 'wed' },
-  { label: 'Thu', value: 'thu' },
-  { label: 'Fri', value: 'fri' },
-  { label: 'Sat', value: 'sat' },
-  { label: 'Sun', value: 'sun' },
-];
-
-function getTodayDayOfWeek(): DayOfWeek {
-  const dayIndex = new Date().getDay();
-  // Convert from Sunday=0 to Monday=0
-  const index = dayIndex === 0 ? 6 : dayIndex - 1;
-  return DAYS[index].value;
-}
 
 export function Onboarding() {
   const {
@@ -46,10 +31,10 @@ export function Onboarding() {
     completeOnboarding,
   } = useOnboarding();
 
-  // Step 2 state
+  // Step 2 state - default to Mon-Fri
   const [habitName, setHabitName] = useState('');
   const [selectedDays, setSelectedDays] = useState<DayOfWeek[]>([
-    getTodayDayOfWeek(),
+    'mon', 'tue', 'wed', 'thu', 'fri'
   ]);
 
   // Step 3 state
@@ -138,33 +123,18 @@ export function Onboarding() {
               placeholder="e.g., Drink water, Read, Stretch"
               placeholderTextColor={colors.mutedForeground}
               autoFocus
+              returnKeyType="done"
+              blurOnSubmit
+              onSubmitEditing={() => Keyboard.dismiss()}
             />
 
             <Text style={[styles.label, { marginTop: spacing.lg }]}>
               Days of week
             </Text>
-            <View style={styles.daysRow}>
-              {DAYS.map((day) => (
-                <Pressable
-                  key={day.value}
-                  style={[
-                    styles.dayPill,
-                    selectedDays.includes(day.value) && styles.dayPillSelected,
-                  ]}
-                  onPress={() => toggleDay(day.value)}
-                >
-                  <Text
-                    style={[
-                      styles.dayText,
-                      selectedDays.includes(day.value) &&
-                        styles.dayTextSelected,
-                    ]}
-                  >
-                    {day.label}
-                  </Text>
-                </Pressable>
-              ))}
-            </View>
+            <DaySelector
+              selectedDays={selectedDays}
+              onToggleDay={toggleDay}
+            />
           </View>
         </ScrollView>
 
@@ -345,28 +315,6 @@ const styles = StyleSheet.create({
     paddingVertical: spacing.md,
     fontSize: fontSize.base,
     color: colors.foreground,
-  },
-  daysRow: {
-    flexDirection: 'row',
-    gap: spacing.xs,
-  },
-  dayPill: {
-    flex: 1,
-    paddingVertical: spacing.sm,
-    borderRadius: borderRadius.md,
-    backgroundColor: colors.muted,
-    alignItems: 'center',
-  },
-  dayPillSelected: {
-    backgroundColor: colors.primary,
-  },
-  dayText: {
-    fontSize: fontSize.xs,
-    fontWeight: '500',
-    color: colors.mutedForeground,
-  },
-  dayTextSelected: {
-    color: colors.primaryForeground,
   },
   todayHeader: {
     flexDirection: 'row',

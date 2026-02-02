@@ -105,6 +105,8 @@ export function FeedbackForm({
             multiline
             numberOfLines={4}
             textAlignVertical="top"
+            returnKeyType="done"
+            blurOnSubmit
           />
           <TextInput
             style={styles.emailInput}
@@ -115,6 +117,7 @@ export function FeedbackForm({
             keyboardType="email-address"
             autoCapitalize="none"
             autoCorrect={false}
+            returnKeyType="done"
           />
           <View style={styles.buttonRow}>
             <Pressable

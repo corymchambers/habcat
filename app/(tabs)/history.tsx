@@ -1,37 +1,40 @@
-import { useState, useCallback, useMemo } from "react";
+import { CatMascot } from '@/components/CatMascot';
+import { borderRadius, colors, fontSize, spacing } from '@/constants/theme';
 import {
-  View,
-  Text,
-  StyleSheet,
-  Pressable,
-  ScrollView,
-  Platform,
-  Modal,
-} from "react-native";
-import { useFocusEffect } from "expo-router";
-import { SafeAreaView } from "react-native-safe-area-context";
-import DateTimePicker, {
-  DateTimePickerEvent,
-} from "@react-native-community/datetimepicker";
-import Ionicons from "@expo/vector-icons/Ionicons";
-import { colors, spacing, fontSize, borderRadius } from "@/constants/theme";
-import { CatMascot } from "@/components/CatMascot";
-import {
+  DayDetail,
+  formatDate,
+  getCompletionStats,
   getHistoryData,
   getStreaks,
-  getCompletionStats,
-  formatDate,
   parseLocalDate,
-  DayDetail,
   StreakData,
-} from "@/database";
+} from '@/database';
+import Ionicons from '@expo/vector-icons/Ionicons';
+import DateTimePicker, {
+  DateTimePickerEvent,
+} from '@react-native-community/datetimepicker';
+import { useFocusEffect } from 'expo-router';
+import { useCallback, useMemo, useState } from 'react';
+import {
+  Modal,
+  Platform,
+  Pressable,
+  ScrollView,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 
-type FilterPeriod = "week" | "month" | "year" | "custom";
+type FilterPeriod = 'week' | 'month' | 'year' | 'custom';
 
 export default function HistoryScreen() {
-  const [period, setPeriod] = useState<FilterPeriod>("week");
+  const [period, setPeriod] = useState<FilterPeriod>('week');
   const [historyData, setHistoryData] = useState<DayDetail[]>([]);
-  const [streaks, setStreaks] = useState<StreakData>({ current: 0, longest: 0 });
+  const [streaks, setStreaks] = useState<StreakData>({
+    current: 0,
+    longest: 0,
+  });
   const [expandedDates, setExpandedDates] = useState<Set<string>>(new Set());
 
   // Custom date range
@@ -55,11 +58,11 @@ export default function HistoryScreen() {
     const end = new Date(today);
     const start = new Date(today);
 
-    if (period === "week") {
+    if (period === 'week') {
       start.setDate(end.getDate() - 6);
-    } else if (period === "month") {
+    } else if (period === 'month') {
       start.setDate(end.getDate() - 29);
-    } else if (period === "year") {
+    } else if (period === 'year') {
       start.setFullYear(end.getFullYear() - 1);
     } else {
       return {
@@ -78,7 +81,7 @@ export default function HistoryScreen() {
     useCallback(() => {
       setHistoryData(getHistoryData(startDate, endDate));
       setStreaks(getStreaks());
-    }, [startDate, endDate])
+    }, [startDate, endDate]),
   );
 
   const stats = useMemo(() => {
@@ -104,13 +107,13 @@ export default function HistoryScreen() {
     yesterdayDate.setDate(yesterdayDate.getDate() - 1);
     const yesterdayStr = formatDate(yesterdayDate);
 
-    if (dateStr === todayStr) return "Today";
-    if (dateStr === yesterdayStr) return "Yesterday";
+    if (dateStr === todayStr) return 'Today';
+    if (dateStr === yesterdayStr) return 'Yesterday';
 
-    return date.toLocaleDateString("en-US", {
-      weekday: "short",
-      month: "short",
-      day: "numeric",
+    return date.toLocaleDateString('en-US', {
+      weekday: 'short',
+      month: 'short',
+      day: 'numeric',
     });
   };
 
@@ -126,9 +129,9 @@ export default function HistoryScreen() {
 
   const handlePickerChange = (
     _event: DateTimePickerEvent,
-    selectedDate?: Date
+    selectedDate?: Date,
   ) => {
-    if (Platform.OS === "android") {
+    if (Platform.OS === 'android') {
       // Android dialog auto-dismisses
       if (showStartPicker) {
         setShowStartPicker(false);
@@ -158,7 +161,7 @@ export default function HistoryScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.container} edges={["top"]}>
+    <SafeAreaView style={styles.container} edges={['top']}>
       <View style={styles.header}>
         <View>
           <Text style={styles.title}>History</Text>
@@ -183,10 +186,13 @@ export default function HistoryScreen() {
 
       {/* Period filter */}
       <View style={styles.filterContainer}>
-        {(["week", "month", "year", "custom"] as FilterPeriod[]).map((p) => (
+        {(['week', 'month', 'year', 'custom'] as FilterPeriod[]).map((p) => (
           <Pressable
             key={p}
-            style={[styles.filterButton, period === p && styles.filterButtonActive]}
+            style={[
+              styles.filterButton,
+              period === p && styles.filterButtonActive,
+            ]}
             onPress={() => setPeriod(p)}
           >
             <Text
@@ -202,7 +208,7 @@ export default function HistoryScreen() {
       </View>
 
       {/* Custom date range pickers */}
-      {period === "custom" && (
+      {period === 'custom' && (
         <View style={styles.customDateContainer}>
           <Pressable style={styles.datePickerField} onPress={openStartPicker}>
             <Text style={styles.datePickerLabel}>From</Text>
@@ -220,7 +226,7 @@ export default function HistoryScreen() {
       )}
 
       {/* Date picker modal (iOS) / dialog (Android) */}
-      {Platform.OS === "ios" && (showStartPicker || showEndPicker) && (
+      {Platform.OS === 'ios' && (showStartPicker || showEndPicker) && (
         <Modal transparent animationType="slide">
           <Pressable style={styles.pickerOverlay} onPress={handlePickerCancel}>
             <Pressable style={styles.pickerContainer} onPress={() => {}}>
@@ -230,7 +236,7 @@ export default function HistoryScreen() {
                   <Text style={styles.pickerCancelText}>Cancel</Text>
                 </Pressable>
                 <Text style={styles.pickerTitle}>
-                  Select {showStartPicker ? "start" : "end"} date
+                  Select {showStartPicker ? 'start' : 'end'} date
                 </Text>
                 <Pressable onPress={handlePickerDone} hitSlop={8}>
                   <Text style={styles.pickerDoneText}>Done</Text>
@@ -253,7 +259,7 @@ export default function HistoryScreen() {
         </Modal>
       )}
 
-      {Platform.OS === "android" && showStartPicker && (
+      {Platform.OS === 'android' && showStartPicker && (
         <DateTimePicker
           value={customStartDate}
           mode="date"
@@ -263,7 +269,7 @@ export default function HistoryScreen() {
         />
       )}
 
-      {Platform.OS === "android" && showEndPicker && (
+      {Platform.OS === 'android' && showEndPicker && (
         <DateTimePicker
           value={customEndDate}
           mode="date"
@@ -302,13 +308,15 @@ export default function HistoryScreen() {
             historyData.map((day) => {
               const isExpanded = expandedDates.has(day.date);
               const isComplete = day.completed === day.total;
-              const hasData = day.completed > 0;
+              const hasData = day.total > 0;
 
               return (
                 <View key={day.date}>
                   <Pressable
                     style={styles.dayRow}
-                    onPress={hasData ? () => toggleExpanded(day.date) : undefined}
+                    onPress={
+                      hasData ? () => toggleExpanded(day.date) : undefined
+                    }
                     disabled={!hasData}
                   >
                     <View style={styles.dayInfo}>
@@ -327,7 +335,7 @@ export default function HistoryScreen() {
                           {day.completed}/{day.total}
                         </Text>
                         <Ionicons
-                          name={isExpanded ? "chevron-up" : "chevron-down"}
+                          name={isExpanded ? 'chevron-up' : 'chevron-down'}
                           size={20}
                           color={colors.mutedForeground}
                         />
@@ -342,7 +350,11 @@ export default function HistoryScreen() {
                       {day.habits.map((habit) => (
                         <View key={habit.id} style={styles.habitRow}>
                           <Ionicons
-                            name={habit.completed ? "checkmark-circle" : "ellipse-outline"}
+                            name={
+                              habit.completed
+                                ? 'checkmark-circle'
+                                : 'ellipse-outline'
+                            }
                             size={20}
                             color={
                               habit.completed
@@ -378,16 +390,16 @@ const styles = StyleSheet.create({
     backgroundColor: colors.background,
   },
   header: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "flex-start",
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'flex-start',
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.md,
     paddingBottom: spacing.md,
   },
   title: {
     fontSize: fontSize.xxl,
-    fontWeight: "700",
+    fontWeight: '700',
     color: colors.foreground,
   },
   subtitle: {
@@ -402,30 +414,31 @@ const styles = StyleSheet.create({
     backgroundColor: colors.muted,
   },
   filterContainer: {
-    flexDirection: "row",
+    flexDirection: 'row',
     paddingHorizontal: spacing.lg,
     marginBottom: spacing.md,
-    gap: spacing.sm,
+    gap: spacing.xs,
   },
   filterButton: {
-    paddingHorizontal: spacing.md,
+    flex: 1,
     paddingVertical: spacing.sm,
     borderRadius: borderRadius.full,
     backgroundColor: colors.secondary,
+    alignItems: 'center',
   },
   filterButtonActive: {
     backgroundColor: colors.primary,
   },
   filterText: {
     fontSize: fontSize.sm,
-    fontWeight: "500",
+    fontWeight: '500',
     color: colors.secondaryForeground,
   },
   filterTextActive: {
     color: colors.primaryForeground,
   },
   customDateContainer: {
-    flexDirection: "row",
+    flexDirection: 'row',
     paddingHorizontal: spacing.lg,
     marginBottom: spacing.md,
     gap: spacing.md,
@@ -445,20 +458,20 @@ const styles = StyleSheet.create({
   },
   datePickerValue: {
     fontSize: fontSize.base,
-    fontWeight: "500",
+    fontWeight: '500',
     color: colors.primary,
   },
   pickerOverlay: {
     flex: 1,
-    backgroundColor: "rgba(0,0,0,0.3)",
-    justifyContent: "flex-end",
+    backgroundColor: 'rgba(0,0,0,0.3)',
+    justifyContent: 'flex-end',
   },
   pickerContainer: {
-    backgroundColor: "#FFFFFF",
+    backgroundColor: '#FFFFFF',
     borderTopLeftRadius: 20,
     borderTopRightRadius: 20,
     paddingBottom: 40,
-    shadowColor: "#000",
+    shadowColor: '#000',
     shadowOffset: { width: 0, height: -4 },
     shadowOpacity: 0.1,
     shadowRadius: 12,
@@ -469,28 +482,29 @@ const styles = StyleSheet.create({
     height: 5,
     borderRadius: 3,
     backgroundColor: colors.muted,
-    alignSelf: "center",
+    alignSelf: 'center',
     marginTop: spacing.sm,
     marginBottom: spacing.xs,
   },
   pickerHeader: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.sm,
     paddingBottom: spacing.md,
   },
   pickerBody: {
-    paddingHorizontal: spacing.sm,
-    alignItems: "center",
+    width: '100%',
+    paddingHorizontal: spacing.md,
   },
   inlinePicker: {
-    height: 340,
+    width: '100%',
+    height: 350,
   },
   pickerTitle: {
     fontSize: fontSize.lg,
-    fontWeight: "600",
+    fontWeight: '600',
     color: colors.foreground,
   },
   pickerCancelText: {
@@ -501,7 +515,7 @@ const styles = StyleSheet.create({
   },
   pickerDoneText: {
     fontSize: fontSize.base,
-    fontWeight: "600",
+    fontWeight: '600',
     color: colors.primary,
     paddingVertical: spacing.sm,
     paddingHorizontal: spacing.sm,
@@ -511,7 +525,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
   },
   streakContainer: {
-    flexDirection: "row",
+    flexDirection: 'row',
     paddingHorizontal: spacing.lg,
     gap: spacing.md,
     marginBottom: spacing.md,
@@ -521,13 +535,13 @@ const styles = StyleSheet.create({
     backgroundColor: colors.card,
     borderRadius: borderRadius.lg,
     padding: spacing.md,
-    alignItems: "center",
+    alignItems: 'center',
     borderWidth: 1,
     borderColor: colors.border,
   },
   streakValue: {
     fontSize: fontSize.xl,
-    fontWeight: "700",
+    fontWeight: '700',
     color: colors.foreground,
     marginTop: spacing.xs,
   },
@@ -537,8 +551,8 @@ const styles = StyleSheet.create({
     marginTop: spacing.xs,
   },
   statsCard: {
-    flexDirection: "row",
-    justifyContent: "space-between",
+    flexDirection: 'row',
+    justifyContent: 'space-between',
     backgroundColor: colors.card,
     borderRadius: borderRadius.lg,
     padding: spacing.lg,
@@ -554,16 +568,16 @@ const styles = StyleSheet.create({
   },
   statValue: {
     fontSize: fontSize.xl,
-    fontWeight: "700",
+    fontWeight: '700',
     color: colors.foreground,
   },
   historyList: {
     marginBottom: spacing.xl,
   },
   dayRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    justifyContent: "space-between",
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
     paddingVertical: spacing.md,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
@@ -573,17 +587,17 @@ const styles = StyleSheet.create({
   },
   dayDate: {
     fontSize: fontSize.base,
-    fontWeight: "500",
+    fontWeight: '500',
     color: colors.foreground,
   },
   dayStats: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: spacing.sm,
   },
   dayCount: {
     fontSize: fontSize.base,
-    fontWeight: "600",
+    fontWeight: '600',
     color: colors.mutedForeground,
   },
   dayCountComplete: {
@@ -592,7 +606,7 @@ const styles = StyleSheet.create({
   noDataText: {
     fontSize: fontSize.sm,
     color: colors.mutedForeground,
-    fontStyle: "italic",
+    fontStyle: 'italic',
   },
   expandedContent: {
     backgroundColor: colors.muted,
@@ -601,8 +615,8 @@ const styles = StyleSheet.create({
     marginBottom: spacing.sm,
   },
   habitRow: {
-    flexDirection: "row",
-    alignItems: "center",
+    flexDirection: 'row',
+    alignItems: 'center',
     gap: spacing.sm,
     paddingVertical: spacing.xs,
   },
@@ -612,15 +626,15 @@ const styles = StyleSheet.create({
   },
   habitNameCompleted: {
     color: colors.mutedForeground,
-    textDecorationLine: "line-through",
+    textDecorationLine: 'line-through',
   },
   emptyState: {
-    alignItems: "center",
+    alignItems: 'center',
     paddingTop: spacing.xl,
   },
   emptyText: {
     fontSize: fontSize.lg,
-    fontWeight: "600",
+    fontWeight: '600',
     color: colors.foreground,
   },
   emptySubtext: {

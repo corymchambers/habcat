@@ -8,22 +8,14 @@ import {
   KeyboardAvoidingView,
   Platform,
   Alert,
+  Keyboard,
 } from "react-native";
 import { useRouter, useLocalSearchParams } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Ionicons from "@expo/vector-icons/Ionicons";
 import { colors, spacing, fontSize, borderRadius } from "@/constants/theme";
 import { getAllHabits, updateHabit, deleteHabit, parseDays, DayOfWeek } from "@/database";
-
-const DAYS: { key: DayOfWeek; label: string }[] = [
-  { key: "mon", label: "Mon" },
-  { key: "tue", label: "Tue" },
-  { key: "wed", label: "Wed" },
-  { key: "thu", label: "Thu" },
-  { key: "fri", label: "Fri" },
-  { key: "sat", label: "Sat" },
-  { key: "sun", label: "Sun" },
-];
+import { DaySelector } from "@/components/DaySelector";
 
 export default function EditHabitScreen() {
   const router = useRouter();
@@ -117,35 +109,18 @@ export default function EditHabitScreen() {
               placeholderTextColor={colors.mutedForeground}
               value={name}
               onChangeText={setName}
+              returnKeyType="done"
+              blurOnSubmit
+              onSubmitEditing={() => Keyboard.dismiss()}
             />
           </View>
 
           <View style={styles.field}>
             <Text style={styles.label}>Repeat on</Text>
-            <View style={styles.daysContainer}>
-              {DAYS.map(({ key, label }) => {
-                const isSelected = selectedDays.has(key);
-                return (
-                  <Pressable
-                    key={key}
-                    style={[
-                      styles.dayButton,
-                      isSelected && styles.dayButtonSelected,
-                    ]}
-                    onPress={() => toggleDay(key)}
-                  >
-                    <Text
-                      style={[
-                        styles.dayText,
-                        isSelected && styles.dayTextSelected,
-                      ]}
-                    >
-                      {label}
-                    </Text>
-                  </Pressable>
-                );
-              })}
-            </View>
+            <DaySelector
+              selectedDays={selectedDays}
+              onToggleDay={toggleDay}
+            />
           </View>
         </View>
 
@@ -219,29 +194,6 @@ const styles = StyleSheet.create({
     padding: spacing.md,
     fontSize: fontSize.base,
     color: colors.foreground,
-  },
-  daysContainer: {
-    flexDirection: "row",
-    gap: spacing.sm,
-  },
-  dayButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    backgroundColor: colors.secondary,
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  dayButtonSelected: {
-    backgroundColor: colors.primary,
-  },
-  dayText: {
-    fontSize: fontSize.sm,
-    fontWeight: "500",
-    color: colors.secondaryForeground,
-  },
-  dayTextSelected: {
-    color: colors.primaryForeground,
   },
   footer: {
     paddingHorizontal: spacing.lg,

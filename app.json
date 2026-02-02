@@ -10,6 +10,8 @@
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
+      "buildNumber": "2",
+      "appleTeamId": "D8DX35HW6N",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
       },
@@ -22,7 +24,8 @@
       },
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
-      "package": "com.corychambers.habcat"
+      "package": "com.corychambers.habcat",
+      "versionCode": 2
     },
     "web": {
       "output": "static",
