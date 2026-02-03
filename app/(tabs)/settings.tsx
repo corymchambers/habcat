@@ -2,11 +2,18 @@ import { useState } from "react";
 import { View, Text, StyleSheet, Pressable } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import Ionicons from "@expo/vector-icons/Ionicons";
+import Constants from "expo-constants";
 import { colors, spacing, fontSize, borderRadius } from "@/constants/theme";
 import { useOnboarding } from "@/context/OnboardingContext";
 import { useReviewPrompt } from "@/context/ReviewPromptContext";
 import { ReviewPrompt } from "@/components/ReviewPrompt";
 import { FeedbackForm } from "@/components/FeedbackForm";
+
+const version = Constants.expoConfig?.version ?? "1.0.0";
+const buildNumber =
+  Constants.expoConfig?.ios?.buildNumber ??
+  Constants.expoConfig?.android?.versionCode?.toString() ??
+  "1";
 
 export default function SettingsScreen() {
   const { resetOnboarding } = useOnboarding();
@@ -39,6 +46,12 @@ export default function SettingsScreen() {
           </View>
           <Ionicons name="chevron-forward" size={20} color={colors.mutedForeground} />
         </Pressable>
+      </View>
+
+      <View style={styles.versionContainer}>
+        <Text style={styles.versionText}>
+          Version {version} ({buildNumber})
+        </Text>
       </View>
 
       <ReviewPrompt visible={shouldShowReviewPrompt} />
@@ -84,5 +97,15 @@ const styles = StyleSheet.create({
   itemText: {
     fontSize: fontSize.base,
     color: colors.foreground,
+  },
+  versionContainer: {
+    flex: 1,
+    justifyContent: "flex-end",
+    alignItems: "center",
+    paddingBottom: spacing.xl,
+  },
+  versionText: {
+    fontSize: fontSize.sm,
+    color: colors.mutedForeground,
   },
 });

@@ -132,7 +132,24 @@ Add your Apple Team ID to `app.json` so Xcode auto-selects your team:
 
 Find your Team ID in Xcode under **Signing & Capabilities** or at [developer.apple.com](https://developer.apple.com/account) → Membership Details.
 
-### Build steps
+### Development testing
+
+Run on simulator:
+```bash
+npx expo run:ios
+```
+
+Run on a specific simulator:
+```bash
+npx expo run:ios --device "iPhone SE"
+```
+
+List available simulators:
+```bash
+xcrun simctl list devices available
+```
+
+### Release build steps
 
 1. Generate the native iOS project:
 

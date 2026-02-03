@@ -32,16 +32,20 @@ type Habit = {
 export default function TodayScreen() {
   const [habits, setHabits] = useState<Habit[]>([]);
   const [completedIds, setCompletedIds] = useState<Set<number>>(new Set());
-  const today = formatDate(new Date());
+  const [today, setToday] = useState(() => formatDate(new Date()));
   const { shouldShowReviewPrompt, recordFullCompletion } = useReviewPrompt();
 
   const loadData = useCallback(() => {
+    // Compute fresh date each time to handle day rollover
+    const currentDate = formatDate(new Date());
+    setToday(currentDate);
+
     const todayHabits = getTodayHabits();
     setHabits(todayHabits);
 
-    const completions = getCompletionsForDate(today);
+    const completions = getCompletionsForDate(currentDate);
     setCompletedIds(new Set(completions.map((c) => c.habitId)));
-  }, [today]);
+  }, []);
 
   useFocusEffect(
     useCallback(() => {

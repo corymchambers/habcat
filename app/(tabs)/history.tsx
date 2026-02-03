@@ -52,7 +52,7 @@ export default function HistoryScreen() {
   // Temp date for picker (so we can cancel)
   const [tempDate, setTempDate] = useState<Date>(new Date());
 
-  const today = useMemo(() => new Date(), []);
+  const [today, setToday] = useState(() => new Date());
 
   const { startDate, endDate } = useMemo(() => {
     const end = new Date(today);
@@ -77,16 +77,39 @@ export default function HistoryScreen() {
     };
   }, [period, today, customStartDate, customEndDate]);
 
+  const [stats, setStats] = useState(() => getCompletionStats(startDate, endDate));
+
   useFocusEffect(
     useCallback(() => {
-      setHistoryData(getHistoryData(startDate, endDate));
-      setStreaks(getStreaks());
-    }, [startDate, endDate]),
-  );
+      // Update today to handle day rollover when app stays in memory
+      const now = new Date();
+      setToday(now);
 
-  const stats = useMemo(() => {
-    return getCompletionStats(startDate, endDate);
-  }, [startDate, endDate]);
+      // Recalculate dates based on current day for non-custom periods
+      let start: string;
+      let end: string;
+      if (period === 'custom') {
+        start = formatDate(customStartDate);
+        end = formatDate(customEndDate);
+      } else {
+        const endDate = new Date(now);
+        const startDate = new Date(now);
+        if (period === 'week') {
+          startDate.setDate(endDate.getDate() - 6);
+        } else if (period === 'month') {
+          startDate.setDate(endDate.getDate() - 29);
+        } else if (period === 'year') {
+          startDate.setFullYear(endDate.getFullYear() - 1);
+        }
+        start = formatDate(startDate);
+        end = formatDate(endDate);
+      }
+
+      setHistoryData(getHistoryData(start, end));
+      setStreaks(getStreaks());
+      setStats(getCompletionStats(start, end));
+    }, [period, customStartDate, customEndDate]),
+  );
 
   const toggleExpanded = (date: string) => {
     setExpandedDates((prev) => {
@@ -251,6 +274,7 @@ export default function HistoryScreen() {
                   maximumDate={showStartPicker ? customEndDate : today}
                   minimumDate={showEndPicker ? customStartDate : undefined}
                   accentColor={colors.primary}
+                  themeVariant="light"
                   style={styles.inlinePicker}
                 />
               </View>
@@ -556,7 +580,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.card,
     borderRadius: borderRadius.lg,
     padding: spacing.lg,
-    marginBottom: spacing.md,
+    marginBottom: spacing.lg,
     borderWidth: 1,
     borderColor: colors.border,
   },
@@ -612,6 +636,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.muted,
     borderRadius: borderRadius.md,
     padding: spacing.md,
+    marginTop: spacing.sm,
     marginBottom: spacing.sm,
   },
   habitRow: {

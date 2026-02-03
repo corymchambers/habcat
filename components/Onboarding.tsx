@@ -13,6 +13,8 @@ import * as Haptics from 'expo-haptics';
 import { useState } from 'react';
 import {
   Keyboard,
+  KeyboardAvoidingView,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -96,57 +98,62 @@ export function Onboarding() {
 
     return (
       <SafeAreaView style={styles.container}>
-        <View style={styles.skipContainer}>
-          <Pressable style={styles.skipButton} onPress={completeOnboarding}>
-            <Text style={styles.skipText}>Skip</Text>
-          </Pressable>
-        </View>
-        <ScrollView
-          style={styles.scrollView}
-          contentContainerStyle={styles.scrollContent}
-          keyboardShouldPersistTaps="handled"
+        <KeyboardAvoidingView
+          style={styles.keyboardAvoid}
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
         >
-          <View style={styles.stepHeader}>
-            <CatMascot variant="peeking" size="lg" />
-            <Text style={styles.title}>Create your first habit</Text>
-            <Text style={styles.description}>
-              Start small. You can change it anytime.
-            </Text>
+          <View style={styles.skipContainer}>
+            <Pressable style={styles.skipButton} onPress={completeOnboarding}>
+              <Text style={styles.skipText}>Skip</Text>
+            </Pressable>
           </View>
-
-          <View style={styles.form}>
-            <Text style={styles.label}>Habit name</Text>
-            <TextInput
-              style={styles.input}
-              value={habitName}
-              onChangeText={setHabitName}
-              placeholder="e.g., Drink water, Read, Stretch"
-              placeholderTextColor={colors.mutedForeground}
-              autoFocus
-              returnKeyType="done"
-              blurOnSubmit
-              onSubmitEditing={() => Keyboard.dismiss()}
-            />
-
-            <Text style={[styles.label, { marginTop: spacing.lg }]}>
-              Days of week
-            </Text>
-            <DaySelector
-              selectedDays={selectedDays}
-              onToggleDay={toggleDay}
-            />
-          </View>
-        </ScrollView>
-
-        <View style={styles.footer}>
-          <Pressable
-            style={[styles.button, !canContinue && styles.buttonDisabled]}
-            onPress={handleCreateHabit}
-            disabled={!canContinue}
+          <ScrollView
+            style={styles.scrollView}
+            contentContainerStyle={styles.scrollContent}
+            keyboardShouldPersistTaps="handled"
           >
-            <Text style={styles.buttonText}>Add Habit</Text>
-          </Pressable>
-        </View>
+            <View style={styles.stepHeader}>
+              <CatMascot variant="peeking" size="lg" />
+              <Text style={styles.title}>Create your first habit</Text>
+              <Text style={styles.description}>
+                Start small. You can change it anytime.
+              </Text>
+            </View>
+
+            <View style={styles.form}>
+              <Text style={styles.label}>Habit name</Text>
+              <TextInput
+                style={styles.input}
+                value={habitName}
+                onChangeText={setHabitName}
+                placeholder="e.g., Drink water, Read, Stretch"
+                placeholderTextColor={colors.mutedForeground}
+                autoFocus
+                returnKeyType="done"
+                blurOnSubmit
+                onSubmitEditing={() => Keyboard.dismiss()}
+              />
+
+              <Text style={[styles.label, { marginTop: spacing.lg }]}>
+                Days of week
+              </Text>
+              <DaySelector
+                selectedDays={selectedDays}
+                onToggleDay={toggleDay}
+              />
+            </View>
+          </ScrollView>
+
+          <View style={styles.footer}>
+            <Pressable
+              style={[styles.button, !canContinue && styles.buttonDisabled]}
+              onPress={handleCreateHabit}
+              disabled={!canContinue}
+            >
+              <Text style={styles.buttonText}>Add Habit</Text>
+            </Pressable>
+          </View>
+        </KeyboardAvoidingView>
       </SafeAreaView>
     );
   }
@@ -230,6 +237,10 @@ export function Onboarding() {
 
 const styles = StyleSheet.create({
   container: {
+    flex: 1,
+    backgroundColor: colors.background,
+  },
+  keyboardAvoid: {
     flex: 1,
     backgroundColor: colors.background,
   },
