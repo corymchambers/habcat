@@ -21,8 +21,31 @@
 - [ ] Expanding a day shows individual habit completion status
 - [ ] Expanded cards have proper spacing (marginTop)
 - [ ] Week/Month/Year/Custom filter buttons all work
-- [ ] Current streak and longest streak calculate correctly
 - [ ] Completion percentage math is correct: completed / expected habits for days that had scheduled habits
+
+## History - Habit Creation Date Filtering
+
+- [ ] Month view only shows data starting from when habits were created
+- [ ] Days before any habits existed show "No data" or are not displayed
+- [ ] Creating a new habit today doesn't show it as scheduled for past dates
+- [ ] Stats only count days from when habits existed
+
+## Streaks
+
+- [ ] Streak definition: consecutive days where at least one habit existed AND all were completed
+- [ ] Days with no habits BREAK the streak (not skipped)
+- [ ] Example: Mon (all done) → Tue (no habits) → Wed (all done) = streak of 1, not 2
+- [ ] Streak only counts from when habits were created (not retroactive)
+- [ ] Current streak shows 0 if today has habits and none completed yet
+
+## Soft Delete (History Preservation)
+
+- [ ] Deleting a habit removes it from Today screen
+- [ ] Deleting a habit removes it from Habits management list
+- [ ] Deleted habit's history still appears in History for past dates
+- [ ] Deleted habit completion counts still included in historical stats
+- [ ] Creating a new habit with same name as deleted one doesn't conflict
+- [ ] Deleted habit doesn't appear in History for dates after deletion
 
 ## Calendar Picker (History - Custom Date Range)
 
@@ -52,7 +75,7 @@
 
 - [ ] Adding a new habit appears in the list
 - [ ] Editing a habit updates name and days
-- [ ] Deleting a habit removes it from all screens
+- [ ] Deleting a habit removes it from Today and Habits screens (soft delete)
 - [ ] Habit with specific days only appears on Today screen on those days
 
 ## Settings

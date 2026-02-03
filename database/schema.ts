@@ -9,6 +9,8 @@ export const habits = sqliteTable("habits", {
   createdAt: integer("created_at", { mode: "timestamp" })
     .notNull()
     .$defaultFn(() => new Date()),
+  // Soft delete - null means active, timestamp means deleted
+  deletedAt: integer("deleted_at", { mode: "timestamp" }),
 });
 
 // Habit completions table

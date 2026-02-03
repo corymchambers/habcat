@@ -17,7 +17,8 @@ export function initDatabase() {
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       name TEXT NOT NULL,
       days TEXT NOT NULL,
-      created_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now') * 1000)
+      created_at INTEGER NOT NULL DEFAULT (strftime('%s', 'now') * 1000),
+      deleted_at INTEGER
     );
 
     CREATE TABLE IF NOT EXISTS completions (
@@ -28,6 +29,13 @@ export function initDatabase() {
       UNIQUE(habit_id, date)
     );
   `);
+
+  // Migration: add deleted_at column if it doesn't exist (for existing databases)
+  try {
+    expo.execSync(`ALTER TABLE habits ADD COLUMN deleted_at INTEGER`);
+  } catch {
+    // Column already exists, ignore
+  }
 }
 
 // Day of week helpers
@@ -101,6 +109,11 @@ export function formatDaysDisplay(days: DayOfWeek[]): string {
 
 // Habit CRUD
 export function getAllHabits() {
+  // Only return active (non-deleted) habits
+  return db.select().from(habits).all().filter((h) => !h.deletedAt);
+}
+
+export function getAllHabitsIncludingDeleted() {
   return db.select().from(habits).all();
 }
 
@@ -131,7 +144,12 @@ export function updateHabit(id: number, name: string, days: DayOfWeek[]) {
 }
 
 export function deleteHabit(id: number) {
-  return db.delete(habits).where(eq(habits.id, id)).run();
+  // Soft delete - set deletedAt timestamp instead of actually deleting
+  return db
+    .update(habits)
+    .set({ deletedAt: new Date() })
+    .where(eq(habits.id, id))
+    .run();
 }
 
 // Completion CRUD
@@ -214,11 +232,31 @@ export function getDayCompletionStatus(
   return "partial";
 }
 
-// Get habits scheduled for a specific date
+// Get habits scheduled for a specific date (only habits that existed on that date)
 export function getHabitsForDate(date: string) {
   const d = parseLocalDate(date);
   const day = dayMap[d.getDay()];
-  return getHabitsForDay(day);
+  const allHabits = getAllHabitsIncludingDeleted();
+
+  return allHabits.filter((h) => {
+    // Must be scheduled for this day of week
+    if (!parseDays(h.days).includes(day)) return false;
+
+    // Must have existed on this date (created on or before)
+    if (h.createdAt) {
+      const createdDate = formatDate(h.createdAt);
+      if (createdDate > date) return false;
+    }
+
+    // Must not have been deleted before this date
+    // (deleted on the same date still counts - you could have completed it that day)
+    if (h.deletedAt) {
+      const deletedDate = formatDate(h.deletedAt);
+      if (deletedDate < date) return false;
+    }
+
+    return true;
+  });
 }
 
 // Get detailed day data for history
@@ -277,7 +315,7 @@ export interface StreakData {
 }
 
 export function getStreaks(): StreakData {
-  const allHabits = getAllHabits();
+  const allHabits = getAllHabitsIncludingDeleted();
   if (allHabits.length === 0) {
     return { current: 0, longest: 0 };
   }
@@ -293,9 +331,7 @@ export function getStreaks(): StreakData {
     completionsByDate.get(c.date)!.add(c.habitId);
   }
 
-  // Find the earliest habit creation or completion date
   const today = new Date();
-  const todayStr = formatDate(today);
 
   // Calculate streaks going backwards from today
   let currentStreak = 0;
@@ -303,20 +339,36 @@ export function getStreaks(): StreakData {
   let tempStreak = 0;
   let streakBroken = false;
 
-  // Go back up to 365 days (or until we find no more data)
+  // Go back up to 365 days
   for (let i = 0; i < 365; i++) {
     const d = new Date(today);
     d.setDate(d.getDate() - i);
     const dateStr = formatDate(d);
     const dow = dayMap[d.getDay()];
 
-    // Get habits scheduled for this day
-    const scheduledHabits = allHabits.filter((h) =>
-      parseDays(h.days).includes(dow)
-    );
+    // Get habits that existed on this date (created before/on, not deleted before)
+    const scheduledHabits = allHabits.filter((h) => {
+      if (!parseDays(h.days).includes(dow)) return false;
+
+      // Must have existed on this date
+      if (h.createdAt) {
+        const createdDate = formatDate(h.createdAt);
+        if (createdDate > dateStr) return false;
+      }
+
+      // Must not have been deleted before this date
+      if (h.deletedAt) {
+        const deletedDate = formatDate(h.deletedAt);
+        if (deletedDate < dateStr) return false;
+      }
+
+      return true;
+    });
 
     if (scheduledHabits.length === 0) {
-      // No habits scheduled, doesn't break streak
+      // No habits on this day - breaks the streak
+      streakBroken = true;
+      tempStreak = 0;
       continue;
     }
 

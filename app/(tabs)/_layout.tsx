@@ -1,11 +1,12 @@
-import { Tabs } from "expo-router";
-import { colors } from "@/constants/theme";
-import Ionicons from "@expo/vector-icons/Ionicons";
+import { colors } from '@/constants/theme';
+import Ionicons from '@expo/vector-icons/Ionicons';
+import { Tabs } from 'expo-router';
 
 export default function TabLayout() {
   return (
     <Tabs
       screenOptions={{
+        animation: 'fade',
         headerShown: false,
         tabBarActiveTintColor: colors.tabActive,
         tabBarInactiveTintColor: colors.tabInactive,
@@ -18,14 +19,14 @@ export default function TabLayout() {
         },
         tabBarLabelStyle: {
           fontSize: 12,
-          fontWeight: "500",
+          fontWeight: '500',
         },
       }}
     >
       <Tabs.Screen
         name="index"
         options={{
-          title: "Today",
+          title: 'Today',
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="checkmark" size={size} color={color} />
           ),
@@ -34,7 +35,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="habits"
         options={{
-          title: "Habits",
+          title: 'Habits',
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="list" size={size} color={color} />
           ),
@@ -43,7 +44,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="history"
         options={{
-          title: "History",
+          title: 'History',
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="calendar-outline" size={size} color={color} />
           ),
@@ -52,7 +53,7 @@ export default function TabLayout() {
       <Tabs.Screen
         name="settings"
         options={{
-          title: "Settings",
+          title: 'Settings',
           tabBarIcon: ({ color, size }) => (
             <Ionicons name="cog-outline" size={size} color={color} />
           ),
