@@ -2,6 +2,20 @@
 
 A minimalist habit tracking app with a cat mascot.
 
+## Environment Variables
+
+Create a `.env` file in the project root with:
+
+```
+EXPO_PUBLIC_WEB3FORMS_KEY=your_web3forms_api_key
+EXPO_PUBLIC_FEEDBACK_EMAIL=your_email@example.com
+EXPO_PUBLIC_SENTRY_DSN=your_sentry_dsn
+```
+
+- `EXPO_PUBLIC_WEB3FORMS_KEY` - API key from [Web3Forms](https://web3forms.com/) for the feedback form
+- `EXPO_PUBLIC_FEEDBACK_EMAIL` - Email address to receive user feedback
+- `EXPO_PUBLIC_SENTRY_DSN` - DSN from [Sentry](https://sentry.io/) for error logging (disabled in development)
+
 ## Get started
 
 1. Install dependencies

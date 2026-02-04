@@ -10,7 +10,7 @@
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "buildNumber": "7",
+      "buildNumber": "8",
       "appleTeamId": "D8DX35HW6N",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false

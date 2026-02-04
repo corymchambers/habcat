@@ -1,16 +1,16 @@
+import { borderRadius, colors, fontSize, spacing } from '@/constants/theme';
 import { useState } from 'react';
 import {
-  View,
-  Text,
-  StyleSheet,
-  Pressable,
-  Modal,
-  TextInput,
-  KeyboardAvoidingView,
-  Platform,
   ActivityIndicator,
+  KeyboardAvoidingView,
+  Modal,
+  Platform,
+  Pressable,
+  StyleSheet,
+  Text,
+  TextInput,
+  View,
 } from 'react-native';
-import { colors, spacing, fontSize, borderRadius } from '@/constants/theme';
 
 const WEB3FORMS_KEY = process.env.EXPO_PUBLIC_WEB3FORMS_KEY;
 
@@ -135,7 +135,10 @@ export function FeedbackForm({
               disabled={!feedback.trim() || isSending}
             >
               {isSending ? (
-                <ActivityIndicator color={colors.primaryForeground} size="small" />
+                <ActivityIndicator
+                  color={colors.primaryForeground}
+                  size="small"
+                />
               ) : (
                 <Text style={styles.buttonText}>Send</Text>
               )}
@@ -205,7 +208,7 @@ const styles = StyleSheet.create({
     borderRadius: borderRadius.md,
     alignItems: 'center',
     justifyContent: 'center',
-    minHeight: 44,
+    minHeight: 60,
   },
   buttonSecondary: {
     backgroundColor: colors.muted,
