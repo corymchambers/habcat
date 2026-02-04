@@ -6,6 +6,7 @@ import {
   Pressable,
   ScrollView,
   Alert,
+  AppState,
 } from "react-native";
 import { useFocusEffect } from "expo-router";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -52,6 +53,17 @@ export default function TodayScreen() {
       loadData();
     }, [loadData])
   );
+
+  // Refresh data when app returns from background
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', (nextAppState) => {
+      if (nextAppState === 'active') {
+        loadData();
+      }
+    });
+
+    return () => subscription.remove();
+  }, [loadData]);
 
   // Check if all habits are now complete and record it
   const checkFullCompletion = useCallback(

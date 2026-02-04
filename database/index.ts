@@ -382,6 +382,11 @@ export function getStreaks(): StreakData {
       }
       longestStreak = Math.max(longestStreak, tempStreak);
     } else {
+      // Today (i === 0): skip if not all completed - don't break streak, just don't count today
+      // Past days: break the streak
+      if (i === 0) {
+        continue;
+      }
       streakBroken = true;
       tempStreak = 0;
     }

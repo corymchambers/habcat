@@ -14,8 +14,9 @@ import DateTimePicker, {
   DateTimePickerEvent,
 } from '@react-native-community/datetimepicker';
 import { useFocusEffect } from 'expo-router';
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
+  AppState,
   Modal,
   Platform,
   Pressable,
@@ -79,37 +80,52 @@ export default function HistoryScreen() {
 
   const [stats, setStats] = useState(() => getCompletionStats(startDate, endDate));
 
+  const loadData = useCallback(() => {
+    // Update today to handle day rollover when app stays in memory
+    const now = new Date();
+    setToday(now);
+
+    // Recalculate dates based on current day for non-custom periods
+    let start: string;
+    let end: string;
+    if (period === 'custom') {
+      start = formatDate(customStartDate);
+      end = formatDate(customEndDate);
+    } else {
+      const endDate = new Date(now);
+      const startDate = new Date(now);
+      if (period === 'week') {
+        startDate.setDate(endDate.getDate() - 6);
+      } else if (period === 'month') {
+        startDate.setDate(endDate.getDate() - 29);
+      } else if (period === 'year') {
+        startDate.setFullYear(endDate.getFullYear() - 1);
+      }
+      start = formatDate(startDate);
+      end = formatDate(endDate);
+    }
+
+    setHistoryData(getHistoryData(start, end));
+    setStreaks(getStreaks());
+    setStats(getCompletionStats(start, end));
+  }, [period, customStartDate, customEndDate]);
+
   useFocusEffect(
     useCallback(() => {
-      // Update today to handle day rollover when app stays in memory
-      const now = new Date();
-      setToday(now);
-
-      // Recalculate dates based on current day for non-custom periods
-      let start: string;
-      let end: string;
-      if (period === 'custom') {
-        start = formatDate(customStartDate);
-        end = formatDate(customEndDate);
-      } else {
-        const endDate = new Date(now);
-        const startDate = new Date(now);
-        if (period === 'week') {
-          startDate.setDate(endDate.getDate() - 6);
-        } else if (period === 'month') {
-          startDate.setDate(endDate.getDate() - 29);
-        } else if (period === 'year') {
-          startDate.setFullYear(endDate.getFullYear() - 1);
-        }
-        start = formatDate(startDate);
-        end = formatDate(endDate);
-      }
-
-      setHistoryData(getHistoryData(start, end));
-      setStreaks(getStreaks());
-      setStats(getCompletionStats(start, end));
-    }, [period, customStartDate, customEndDate]),
+      loadData();
+    }, [loadData]),
   );
+
+  // Refresh data when app returns from background
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', (nextAppState) => {
+      if (nextAppState === 'active') {
+        loadData();
+      }
+    });
+
+    return () => subscription.remove();
+  }, [loadData]);
 
   const toggleExpanded = (date: string) => {
     setExpandedDates((prev) => {

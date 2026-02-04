@@ -5,6 +5,7 @@
 - [ ] Leave app in background overnight, open next morning - Today screen should show unchecked habits for the new day, not yesterday's checked state
 - [ ] Leave app in background overnight, open History tab - should show correct date ranges relative to the new day
 - [ ] Verify "Today" and "Yesterday" labels in History are correct after day rollover
+- [ ] App returning from background (not just tab switch) refreshes data for both Today and History screens
 
 ## Today Screen
 
@@ -36,7 +37,10 @@
 - [ ] Days with no habits BREAK the streak (not skipped)
 - [ ] Example: Mon (all done) → Tue (no habits) → Wed (all done) = streak of 1, not 2
 - [ ] Streak only counts from when habits were created (not retroactive)
-- [ ] Current streak shows 0 if today has habits and none completed yet
+- [ ] Today special case: if habits not all completed, today is skipped (doesn't break streak)
+- [ ] Example: 5-day streak going into today, today's habits not done yet → streak shows 5
+- [ ] Example: 5-day streak going into today, complete all today's habits → streak shows 6
+- [ ] Same logic applies to both current streak and longest streak
 
 ## Soft Delete (History Preservation)
 
