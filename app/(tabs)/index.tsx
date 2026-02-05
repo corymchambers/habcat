@@ -65,15 +65,12 @@ export default function TodayScreen() {
     return () => subscription.remove();
   }, [loadData]);
 
-  // Check if all habits are now complete and record it
-  const checkFullCompletion = useCallback(
-    (newCompletedIds: Set<number>, totalHabits: number) => {
-      if (totalHabits > 0 && newCompletedIds.size === totalHabits) {
-        recordFullCompletion(today);
-      }
-    },
-    [today, recordFullCompletion]
-  );
+  // Check if all habits are complete and record it for review prompt
+  useEffect(() => {
+    if (habits.length > 0 && completedIds.size === habits.length) {
+      recordFullCompletion(today);
+    }
+  }, [completedIds.size, habits.length, today, recordFullCompletion]);
 
   const handleToggle = (habitId: number) => {
     const isCurrentlyCompleted = completedIds.has(habitId);
@@ -104,8 +101,6 @@ export default function TodayScreen() {
       setCompletedIds((prev) => {
         const next = new Set(prev);
         next.add(habitId);
-        // Check for full completion after adding
-        checkFullCompletion(next, habits.length);
         return next;
       });
     }
