@@ -2,7 +2,7 @@
   "expo": {
     "name": "Habcat",
     "slug": "habcat",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "scheme": "habcat",
@@ -10,7 +10,7 @@
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "buildNumber": "9",
+      "buildNumber": "11",
       "appleTeamId": "D8DX35HW6N",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
@@ -25,7 +25,7 @@
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
       "package": "com.corychambers.habcat",
-      "versionCode": 5
+      "versionCode": 6
     },
     "web": {
       "output": "static",
