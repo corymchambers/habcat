@@ -56,8 +56,17 @@ export default function HistoryScreen() {
   const [today, setToday] = useState(() => new Date());
 
   const { startDate, endDate } = useMemo(() => {
+    if (period === 'custom') {
+      return {
+        startDate: formatDate(customStartDate),
+        endDate: formatDate(customEndDate),
+      };
+    }
+
+    // Exclude today for preset periods so incomplete today doesn't skew stats
     const end = new Date(today);
-    const start = new Date(today);
+    end.setDate(end.getDate() - 1); // yesterday
+    const start = new Date(end);
 
     if (period === 'week') {
       start.setDate(end.getDate() - 6);
@@ -65,11 +74,6 @@ export default function HistoryScreen() {
       start.setDate(end.getDate() - 29);
     } else if (period === 'year') {
       start.setFullYear(end.getFullYear() - 1);
-    } else {
-      return {
-        startDate: formatDate(customStartDate),
-        endDate: formatDate(customEndDate),
-      };
     }
 
     return {
@@ -78,7 +82,9 @@ export default function HistoryScreen() {
     };
   }, [period, today, customStartDate, customEndDate]);
 
-  const [stats, setStats] = useState(() => getCompletionStats(startDate, endDate));
+  const [stats, setStats] = useState(() =>
+    getCompletionStats(startDate, endDate),
+  );
 
   const loadData = useCallback(() => {
     // Update today to handle day rollover when app stays in memory
@@ -92,8 +98,10 @@ export default function HistoryScreen() {
       start = formatDate(customStartDate);
       end = formatDate(customEndDate);
     } else {
+      // Exclude today for preset periods so incomplete today doesn't skew stats
       const endDate = new Date(now);
-      const startDate = new Date(now);
+      endDate.setDate(endDate.getDate() - 1); // yesterday
+      const startDate = new Date(endDate);
       if (period === 'week') {
         startDate.setDate(endDate.getDate() - 6);
       } else if (period === 'month') {
@@ -334,6 +342,9 @@ export default function HistoryScreen() {
             </Text>
           </View>
         </View>
+        {period !== 'custom' && (
+          <Text style={styles.statsNote}>Not including today</Text>
+        )}
 
         {/* History list */}
         <View style={styles.historyList}>
@@ -535,11 +546,9 @@ const styles = StyleSheet.create({
     paddingBottom: spacing.md,
   },
   pickerBody: {
-    width: '100%',
-    paddingHorizontal: spacing.md,
+    alignItems: 'center',
   },
   inlinePicker: {
-    width: '100%',
     height: 350,
   },
   pickerTitle: {
@@ -596,9 +605,15 @@ const styles = StyleSheet.create({
     backgroundColor: colors.card,
     borderRadius: borderRadius.lg,
     padding: spacing.lg,
-    marginBottom: spacing.lg,
+    marginBottom: spacing.xs,
     borderWidth: 1,
     borderColor: colors.border,
+  },
+  statsNote: {
+    fontSize: fontSize.xs,
+    color: colors.mutedForeground,
+    fontStyle: 'italic',
+    marginBottom: spacing.lg,
   },
   statItem: {},
   statLabel: {

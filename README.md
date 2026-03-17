@@ -70,9 +70,15 @@ Without `--clean`, existing native values are preserved and won't update.
 
 3. The keystore is already in `.gitignore`
 
-### After running `prebuild` or `prebuild --clean`
+### Automated release signing via expo-signed
 
-After generating the android folder, add the release signing config to `android/app/build.gradle`:
+The [expo-signed](https://github.com/akayakagunduz/expo-signed) plugin is configured in `app.json` to automatically inject the release signing config into `android/app/build.gradle` during prebuild. This means you no longer need to manually edit `build.gradle` after running `prebuild --clean`.
+
+The plugin references gradle property names (`HABCAT_UPLOAD_STORE_FILE`, etc.) which Gradle resolves from `~/.gradle/gradle.properties` at build time. Passwords stay out of `app.json` and git.
+
+### Manual release signing (no longer needed)
+
+Previously, after every `prebuild --clean`, you had to manually add the release signing config to `android/app/build.gradle`. This is now handled by `expo-signed` above, but kept here for reference.
 
 1. Find the `signingConfigs` block and add a `release` config:
 
@@ -105,14 +111,6 @@ After generating the android folder, add the release signing config to `android/
        }
    }
    ```
-
-### Automating signing with a config plugin (optional)
-
-To avoid manually re-adding signing config after every `prebuild --clean`, you can use a config plugin:
-
-- **Pre-built plugin:** [expo-signed](https://github.com/akayakagunduz/expo-signed)
-- **DIY guide:** [How I Manage Signing Configs with Expo Prebuild](https://medium.com/@alessandro.orlich_17521/how-i-manage-signing-configs-with-expo-prebuild-6ea6b7576dff)
-- **Official docs:** [Create a release build locally](https://docs.expo.dev/guides/local-app-production/)
 
 ### Build commands
 
@@ -187,4 +185,4 @@ If you need to regenerate native projects (e.g., after changing bundle identifie
 npx expo prebuild --clean
 ```
 
-**Note:** After this, you only need to re-add the signing config code to `build.gradle` (see Android section above). The credentials in `~/.gradle/gradle.properties` and the keystore file are preserved.
+**Note:** The `expo-signed` plugin automatically re-adds the Android signing config, so no manual steps are needed after this. The credentials in `~/.gradle/gradle.properties` and the keystore file are preserved.

@@ -10,7 +10,7 @@
     "newArchEnabled": true,
     "ios": {
       "supportsTablet": true,
-      "buildNumber": "8",
+      "buildNumber": "9",
       "appleTeamId": "D8DX35HW6N",
       "infoPlist": {
         "ITSAppUsesNonExemptEncryption": false
@@ -25,7 +25,7 @@
       "edgeToEdgeEnabled": true,
       "predictiveBackGestureEnabled": false,
       "package": "com.corychambers.habcat",
-      "versionCode": 3
+      "versionCode": 5
     },
     "web": {
       "output": "static",
@@ -40,6 +40,28 @@
           "imageWidth": 400,
           "resizeMode": "contain",
           "backgroundColor": "#FDFBF7"
+        }
+      ],
+      [
+        "expo-signed",
+        {
+          "store_file": {
+            "key": "HABCAT_UPLOAD_STORE_FILE",
+            "value": "release.keystore"
+          },
+          "key_alias": {
+            "key": "HABCAT_UPLOAD_KEY_ALIAS",
+            "value": "habcat"
+          },
+          "store_password": {
+            "key": "HABCAT_UPLOAD_STORE_PASSWORD",
+            "value": ""
+          },
+          "key_password": {
+            "key": "HABCAT_UPLOAD_KEY_PASSWORD",
+            "value": ""
+          },
+          "keystorePath": "."
         }
       ]
     ],
